@@ -33,20 +33,142 @@ def main():
         help='File to store token in',
         default='~/.panasonic-token')
 
+    commandparser = parser.add_subparsers(
+        help='commands',
+        dest='command')
+ 
+    commandparser.add_parser(
+        'list',
+        help="Get a list of all devices")
+
+    get_parser = commandparser.add_parser(
+        'get',
+        help="Get status of a device")
+
+    get_parser.add_argument(
+        dest='device',
+        help='device number')
+
+    set_parser = commandparser.add_parser(
+        'set',
+        help="Set status of a device")
+
+    set_parser.add_argument(
+        dest='device',
+        help='Device number'
+    )
+
+    set_parser.add_argument(
+        '--power',
+        choices=[
+            panasonic.constants.Power.On.name,
+            panasonic.constants.Power.Off.name],
+        help='Power mode')
+
+    set_parser.add_argument(
+        '--temperature',
+        type=float,
+        help="Temperature")
+
+    set_parser.add_argument(
+        '--fanspeed',
+        choices=[
+            panasonic.constants.FanSpeed.Auto.name,
+            panasonic.constants.FanSpeed.Low.name,
+            panasonic.constants.FanSpeed.LowMid.name,
+            panasonic.constants.FanSpeed.Mid.name,
+            panasonic.constants.FanSpeed.HighMid.name,
+            panasonic.constants.FanSpeed.High.name],
+        help='Fan speed')
+
+    set_parser.add_argument(
+        '--mode',
+        choices=[
+            panasonic.constants.OperationMode.Auto.name,
+            panasonic.constants.OperationMode.Cool.name,
+            panasonic.constants.OperationMode.Dry.name,
+            panasonic.constants.OperationMode.Heat.name,
+            panasonic.constants.OperationMode.Fan.name],
+        help='Operation mode')
+
+    set_parser.add_argument(
+        '--eco',
+        choices=[
+            panasonic.constants.EcoMode.Auto.name,
+            panasonic.constants.EcoMode.Quiet.name,
+            panasonic.constants.EcoMode.Powerful.name],
+        help='Eco mode')
+
+    # set_parser.add_argument(
+    #     '--airswingauto',
+    #     choices=[
+    #         panasonic.constants.AirSwingAutoMode.Disabled.name,
+    #         panasonic.constants.AirSwingAutoMode.AirSwingLR.name,
+    #         panasonic.constants.AirSwingAutoMode.AirSwingUD.name,
+    #         panasonic.constants.AirSwingAutoMode.Both.name],
+    #     help='Automation of air swing')
+
+    set_parser.add_argument(
+        '--airswingvertical',
+        choices=[
+            panasonic.constants.AirSwingUD.Auto.name,
+            panasonic.constants.AirSwingUD.Down.name,
+            panasonic.constants.AirSwingUD.DownMid.name,
+            panasonic.constants.AirSwingUD.Mid.name,
+            panasonic.constants.AirSwingUD.UpMid.name,
+            panasonic.constants.AirSwingUD.Up.name],
+        help='Vertical position of the air swing')
+
+    set_parser.add_argument(
+        '--airswinghorizontal',
+        choices=[
+            panasonic.constants.AirSwingLR.Auto.name,
+            panasonic.constants.AirSwingLR.Left.name,
+            panasonic.constants.AirSwingLR.LeftMid.name,
+            panasonic.constants.AirSwingLR.Mid.name,
+            panasonic.constants.AirSwingLR.RightMid.name,
+            panasonic.constants.AirSwingLR.Right.name],
+        help='Horizontal position of the air swing')
+
     args = parser.parse_args()
 
     session = panasonic.Session(args.username, args.password, args.token)
     session.login()
     try:
-        print_result(session.get_devices())
+        if args.command == 'list':
+            print_result(session.get_devices())
 
-        # session.set_giid(session.installations[args.installation - 1]['giid'])
+        if args.command == 'get':
+            print('getting info about device {}'.format(args.device))
 
-        # if args.command == COMMAND_INSTALLATIONS:
-        #     print_result(session.installations)
+        if args.command == 'set':
+            print('setting info about device {}'.format(args.device))
 
-        # if args.command == COMMAND_OVERVIEW:
-        #     print_result(session.get_overview(), *args.filter)
+            parameters = {}
+
+            if(args.power):
+                parameters['operate'] = panasonic.constants.Power[args.power]
+            
+            if(args.fanspeed):
+                parameters['fanSpeed'] = panasonic.constants.FanSpeed[args.fanspeed]
+
+            if(args.mode):
+                parameters['operationMode'] = panasonic.constants.OperationMode[args.mode]
+
+            if(args.eco):
+                parameters['ecoMode'] = panasonic.constants.EcoMode[args.eco]
+
+            if(args.airswinghorizontal):
+                parameters['airSwingLR'] = panasonic.constants.AirSwingLR[args.airswinghorizontal]
+
+            if(args.airswingvertical):
+                parameters['airSwingUD'] = panasonic.constants.AirSwingUD[args.airswingvertical]
+
+            if(args.temperature):
+                parameters['temperatureSet'] = args.temperature
+
+            print_result(parameters)
+
     
     except panasonic.ResponseError as ex:
         print(ex.text)
