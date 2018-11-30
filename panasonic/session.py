@@ -54,6 +54,8 @@ class Session(object):
         self._tokenFileName = os.path.expanduser(tokenFileName)
         self._vid = None
         self._groups = None
+        self._devices = {}
+        self._verifySsl = False
 
     def __enter__(self):
         self.login()
@@ -66,6 +68,7 @@ class Session(object):
     def login(self):
         """ Login to verisure app api """
 
+        
         if os.path.exists(self._tokenFileName):
             with open(self._tokenFileName, 'r') as cookieFile:
                 self._vid = cookieFile.read().strip()
@@ -99,14 +102,14 @@ class Session(object):
     def _create_token(self): 
         response = None
 
-        payload = '''{
+        payload = {
             "language": "0",
-            "loginId": "{username}",
-            "password": "{password}"
-        }'''.format(username=self._username, password=self._password)
+            "loginId": self._username,
+            "password": self._password
+        }
 
         try:
-            response = requests.post(urls.login(), payload, headers=self._headers())
+            response = requests.post(urls.login(), json=payload, headers=self._headers(), verify=self._verifySsl)
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
         
@@ -121,8 +124,8 @@ class Session(object):
         response = None
 
         try:
-            response = requests.get(urls.get_groups(),headers=self._headers())
-            
+            response = requests.get(urls.get_groups(),headers=self._headers(), verify=self._verifySsl)
+
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
         
@@ -131,6 +134,18 @@ class Session(object):
 
         _validate_response(response)
         self._groups = json.loads(response.text)
+
+    def get_devices(self, group=None):
+        for group in self._groups['groupList']:
+            groupName = group['groupName']
+            for device in group['deviceIdList']:
+                self._devices[device['deviceHashGuid']] = {
+                    'guid': device['deviceGuid'], 
+                    'name': device['deviceName'],
+                    'group': groupName
+                }
+
+        return self._devices
 
     def get_device_overview(self, deviceGuid):
         """ get device overview """

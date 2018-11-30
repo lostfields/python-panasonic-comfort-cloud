@@ -2,6 +2,18 @@ import argparse
 import json
 import panasonic
 
+def print_result(overview, *names):
+    """ Print the result of a verisure request """
+    if names:
+        print(json.dumps(overview, indent=4, separators=(',', ': ')))
+        # for name in names:
+        #     toprint = overview
+        #     for part in overview:
+        #         toprint = toprint[part]
+        #     print(json.dumps(toprint, indent=4, separators=(',', ': ')))
+    else:
+        print(json.dumps(overview, indent=4, separators=(',', ': ')))
+
 def main():
     """ Start Panasonic Comfort Cloud command line """
 
@@ -23,10 +35,11 @@ def main():
 
     args = parser.parse_args()
 
-    session = panasonic.Session(args.username, args.password, args.cookie)
+    session = panasonic.Session(args.username, args.password, args.token)
     session.login()
     try:
-        print('Yes')
+        print_result(session.get_devices())
+
         # session.set_giid(session.installations[args.installation - 1]['giid'])
 
         # if args.command == COMMAND_INSTALLATIONS:
