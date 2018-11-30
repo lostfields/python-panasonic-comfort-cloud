@@ -54,7 +54,7 @@ class Session(object):
         self._tokenFileName = os.path.expanduser(tokenFileName)
         self._vid = None
         self._groups = None
-        self._devices = {}
+        self._devices = None
         self._verifySsl = False
 
     def __enter__(self):
@@ -63,12 +63,10 @@ class Session(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logout()
-        """ If of interest, add exception handler """
-
+        
     def login(self):
         """ Login to verisure app api """
 
-        
         if os.path.exists(self._tokenFileName):
             with open(self._tokenFileName, 'r') as cookieFile:
                 self._vid = cookieFile.read().strip()
@@ -134,16 +132,24 @@ class Session(object):
 
         _validate_response(response)
         self._groups = json.loads(response.text)
+        self._devices = None
 
     def get_devices(self, group=None):
-        for group in self._groups['groupList']:
-            groupName = group['groupName']
-            for device in group['deviceIdList']:
-                self._devices[device['deviceHashGuid']] = {
-                    'guid': device['deviceGuid'], 
-                    'name': device['deviceName'],
-                    'group': groupName
-                }
+        if self._vid is None:
+            self.login()
+
+        if self._devices is None:
+            self._devices = []
+
+            for group in self._groups['groupList']:
+                for device in group['deviceIdList']:
+                    self._devices.append({
+                        'group': group['groupName'],
+                        'uuid': device['deviceHashGuid'],
+                        'name': device['deviceName'],
+                        'model': device['deviceModuleNumber'],
+                        '_guid': device['deviceGuid']
+                    })
 
         return self._devices
 

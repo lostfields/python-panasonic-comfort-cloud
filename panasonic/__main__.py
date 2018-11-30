@@ -47,7 +47,8 @@ def main():
 
     get_parser.add_argument(
         dest='device',
-        help='device number')
+        type=int,
+        help='Device number #')
 
     set_parser = commandparser.add_parser(
         'set',
@@ -55,7 +56,8 @@ def main():
 
     set_parser.add_argument(
         dest='device',
-        help='Device number'
+        type=int,
+        help='Device number #'
     )
 
     set_parser.add_argument(
@@ -136,16 +138,25 @@ def main():
     session.login()
     try:
         if args.command == 'list':
-            print_result(session.get_devices())
+            print("list of devices and its device id #")
+            for idx, device in enumerate(session.get_devices()):
+                print("  #{} - group: '{}', name: '{}', model: '{}'".format(idx + 1, device['group'], device['name'], device['model']))
 
         if args.command == 'get':
-            print('getting info about device {}'.format(args.device))
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+
+            device = session.get_devices()[int(args.device) - 1]            
+            print("reading from device '{}' ({})".format(device['name'], device['uuid']))
 
         if args.command == 'set':
-            print('setting info about device {}'.format(args.device))
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+
+            device = session.get_devices()[int(args.device) - 1]
+            print("writing to device '{}' ({})".format(device['name'], device['uuid']))
 
             parameters = {}
-
             if(args.power):
                 parameters['operate'] = panasonic.constants.Power[args.power]
             
