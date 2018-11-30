@@ -59,19 +59,19 @@ def main():
     )
 
     set_parser.add_argument(
-        '--power',
+        '-p', '--power',
         choices=[
             panasonic.constants.Power.On.name,
             panasonic.constants.Power.Off.name],
         help='Power mode')
 
     set_parser.add_argument(
-        '--temperature',
+        '-t', '--temperature',
         type=float,
         help="Temperature")
 
     set_parser.add_argument(
-        '--fanspeed',
+        '-f', '--fanspeed',
         choices=[
             panasonic.constants.FanSpeed.Auto.name,
             panasonic.constants.FanSpeed.Low.name,
@@ -82,7 +82,7 @@ def main():
         help='Fan speed')
 
     set_parser.add_argument(
-        '--mode',
+        '-m', '--mode',
         choices=[
             panasonic.constants.OperationMode.Auto.name,
             panasonic.constants.OperationMode.Cool.name,
@@ -92,7 +92,7 @@ def main():
         help='Operation mode')
 
     set_parser.add_argument(
-        '--eco',
+        '-e', '--eco',
         choices=[
             panasonic.constants.EcoMode.Auto.name,
             panasonic.constants.EcoMode.Quiet.name,
@@ -109,7 +109,7 @@ def main():
     #     help='Automation of air swing')
 
     set_parser.add_argument(
-        '--airswingvertical',
+        '-y', '--airswingvertical',
         choices=[
             panasonic.constants.AirSwingUD.Auto.name,
             panasonic.constants.AirSwingUD.Down.name,
@@ -120,7 +120,7 @@ def main():
         help='Vertical position of the air swing')
 
     set_parser.add_argument(
-        '--airswinghorizontal',
+        '-x', '--airswinghorizontal',
         choices=[
             panasonic.constants.AirSwingLR.Auto.name,
             panasonic.constants.AirSwingLR.Left.name,
@@ -167,7 +167,7 @@ def main():
             if(args.temperature):
                 parameters['temperatureSet'] = args.temperature
 
-            print_result(parameters)
+            print(parameters)
 
     
     except panasonic.ResponseError as ex:
