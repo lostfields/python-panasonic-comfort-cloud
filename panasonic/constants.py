@@ -1,10 +1,14 @@
 from enum import Enum
 
+class Power(Enum):
+    Off = 0
+    On = 1
+
 class OperationMode(Enum):
     Auto = 0
     Dry = 1
     Cool = 2
-    Heat= 3
+    Heat = 3
     Fan = 4
 
 class AirSwingUD(Enum):
@@ -21,7 +25,7 @@ class AirSwingLR(Enum):
     
     Left = 0
     LeftMid = 4
-    Mid = 2,
+    Mid = 2
     RightMid = 3
     Right = 1
 
@@ -43,7 +47,3 @@ class FanSpeed(Enum):
     Mid = 3
     HighMid = 4
     High = 5
-
-class Power(Enum):
-    Off = 0
-    On = 1

@@ -2,17 +2,19 @@ import argparse
 import json
 import panasonic
 
-def print_result(overview, *names):
-    """ Print the result of a verisure request """
-    if names:
-        print(json.dumps(overview, indent=4, separators=(',', ': ')))
-        # for name in names:
-        #     toprint = overview
-        #     for part in overview:
-        #         toprint = toprint[part]
-        #     print(json.dumps(toprint, indent=4, separators=(',', ': ')))
-    else:
-        print(json.dumps(overview, indent=4, separators=(',', ': ')))
+from enum import Enum
+
+def print_result(obj, indent = 0):
+    for key in obj:
+        value = obj[key]
+
+        if isinstance(value, dict):
+            print(" "*indent + key)
+            print_result(value, indent + 4)
+        elif isinstance(value, Enum):
+            print(" "*indent + "{0: <{width}}: {1}".format(key, value.name, width=25-indent))
+        else:
+            print(" "*indent + "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
 def main():
     """ Start Panasonic Comfort Cloud command line """
@@ -147,14 +149,16 @@ def main():
                 raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]            
-            print("reading from device '{}' ({})".format(device['name'], device['uuid']))
+            print("reading from device '{}' ({})".format(device['name'], device['id']))
+
+            print_result( session.get_device(device['id']) )
 
         if args.command == 'set':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
                 raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
-            print("writing to device '{}' ({})".format(device['name'], device['uuid']))
+            print("writing to device '{}' ({})".format(device['name'], device['id']))
 
             parameters = {}
             if(args.power):
