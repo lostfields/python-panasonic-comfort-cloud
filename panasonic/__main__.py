@@ -75,7 +75,7 @@ def main():
         help="Temperature")
 
     set_parser.add_argument(
-        '-f', '--fanspeed',
+        '-f', '--fanSpeed',
         choices=[
             panasonic.constants.FanSpeed.Auto.name,
             panasonic.constants.FanSpeed.Low.name,
@@ -113,7 +113,7 @@ def main():
     #     help='Automation of air swing')
 
     set_parser.add_argument(
-        '-y', '--airswingvertical',
+        '-y', '--airSwingVertical',
         choices=[
             panasonic.constants.AirSwingUD.Auto.name,
             panasonic.constants.AirSwingUD.Down.name,
@@ -124,7 +124,7 @@ def main():
         help='Vertical position of the air swing')
 
     set_parser.add_argument(
-        '-x', '--airswinghorizontal',
+        '-x', '--airSwingHorizontal',
         choices=[
             panasonic.constants.AirSwingLR.Auto.name,
             panasonic.constants.AirSwingLR.Left.name,
@@ -160,30 +160,27 @@ def main():
             device = session.get_devices()[int(args.device) - 1]
             print("writing to device '{}' ({})".format(device['name'], device['id']))
 
-            parameters = {}
-            if(args.power):
-                parameters['operate'] = panasonic.constants.Power[args.power]
+            kwargs = {}
+
+            if args.power is not None:
+                kwargs['power'] = panasonic.constants.Power[args.power]
+
+            if args.temperature is not None:
+                kwargs['temperature'] = args.temperature
+                
+            if args.fanSpeed is not None:
+                kwargs['fanSpeed'] = panasonic.constants.FanSpeed[args.fanSpeed]
             
-            if(args.fanspeed):
-                parameters['fanSpeed'] = panasonic.constants.FanSpeed[args.fanspeed]
+            if args.mode is not None:
+                kwargs['mode'] = panasonic.constants.OperationMode[args.mode]
 
-            if(args.mode):
-                parameters['operationMode'] = panasonic.constants.OperationMode[args.mode]
+            if args.airSwingHorizontal is not None:
+                kwargs['airSwingHorizontal'] = panasonic.constants.AirSwingLR[args.airSwingHorizontal]
 
-            if(args.eco):
-                parameters['ecoMode'] = panasonic.constants.EcoMode[args.eco]
+            if args.airSwingVertical is not None:
+                kwargs['airSwingVertical'] = panasonic.constants.AirSwingUD[args.airSwingVertical]
 
-            if(args.airswinghorizontal):
-                parameters['airSwingLR'] = panasonic.constants.AirSwingLR[args.airswinghorizontal]
-
-            if(args.airswingvertical):
-                parameters['airSwingUD'] = panasonic.constants.AirSwingUD[args.airswingvertical]
-
-            if(args.temperature):
-                parameters['temperatureSet'] = args.temperature
-
-            print(parameters)
-
+            session.set_device(device['id'], **kwargs)
     
     except panasonic.ResponseError as ex:
         print(ex.text)

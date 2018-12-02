@@ -186,7 +186,7 @@ class Session(object):
         
         Args:
             id  (str): Id of the device
-            kwargs   : {temperature=float}, {mode=OperationMode}, {fanSpeed=FanSpeed}, {power=Power}, {AirSwingHorizontal=}, {AirSwingVertical=}, {Eco=EcoMode}
+            kwargs   : {temperature=float}, {mode=OperationMode}, {fanSpeed=FanSpeed}, {power=Power}, {airSwingHorizontal=}, {airSwingVertical=}, {eco=EcoMode}
         """
 
         parameters = {}
@@ -195,6 +195,9 @@ class Session(object):
 
         if kwargs is not None:
             for key, value in kwargs.items():
+                if key == 'power' and isinstance(value, constants.Power):
+                    parameters['operate'] = value.value
+
                 if key == 'temperature':
                     parameters['temperatureSet'] = value
 
