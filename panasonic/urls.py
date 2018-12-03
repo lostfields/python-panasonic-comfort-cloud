@@ -15,7 +15,13 @@ def get_groups():
     return '{base_url}/device/group'.format(
         base_url=BASE_URL)
 
-def overview(guid): 
+def status(guid): 
+    return '{base_url}/deviceStatus/{guid}'.format(
+        base_url=BASE_URL,
+        guid=guid
+    )
+
+def statusCache(guid): 
     return '{base_url}/deviceStatus/now/{guid}'.format(
         base_url=BASE_URL,
         guid=guid

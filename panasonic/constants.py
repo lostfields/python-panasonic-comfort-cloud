@@ -13,8 +13,7 @@ class OperationMode(Enum):
 
 class AirSwingUD(Enum):
     Auto = -1
-
-    Up = 0,
+    Up = 0
     UpMid = 3
     Mid = 2
     DownMid = 4
@@ -22,7 +21,6 @@ class AirSwingUD(Enum):
 
 class AirSwingLR(Enum):
     Auto = -1
-    
     Left = 0
     LeftMid = 4
     Mid = 2

@@ -4,9 +4,11 @@ Panasonic session, using Panasonic Comfort Cloud app api
 
 import json
 import requests
+import os
+import urllib3
+
 from . import urls
 from . import constants
-import os
 
 def _validate_response(response):
     """ Verify that response is OK """
@@ -49,7 +51,7 @@ class Session(object):
     
     """
 
-    def __init__(self, username, password, tokenFileName='~/.panasonic-token'):
+    def __init__(self, username, password, tokenFileName='~/.panasonic-token', verifySsl=True):
         self._username = username
         self._password = password
         self._tokenFileName = os.path.expanduser(tokenFileName)
@@ -57,7 +59,10 @@ class Session(object):
         self._groups = None
         self._devices = None
         self._deviceIndexer = {}
-        self._verifySsl = False
+        self._verifySsl = verifySsl
+
+        if verifySsl == False: 
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     def __enter__(self):
         self.login()
@@ -163,7 +168,7 @@ class Session(object):
             response = None
             
             try:
-                response = requests.get(urls.overview(deviceGuid), headers=self._headers(), verify=self._verifySsl)
+                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -173,7 +178,7 @@ class Session(object):
 
             _validate_response(response)
             _json = json.loads(response.text)
-          
+
             return {
                 'id': id,
                 'parameters': self._read_parameters(_json['parameters'])
@@ -213,27 +218,75 @@ class Session(object):
                 if key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
                     airY = value
 
+        
+        # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
+        if airX is not None or airY is not None:
+            fanAuto = 0
+            device = self.get_device(id)
 
-        if airX and airY and airX.value == -1 and airY.value == -1:
-            parameters['fanAutoMode'] = constants.AirSwingAutoMode.Both
-        elif airX and airX.value == -1:
-            parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingLR
-        elif airY and airY.value == -1:
-            parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingUD
-        elif airX and airY:
-            parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled
-    
-        if airX is not None and airX.value is not -1:
-            parameters['airSwingLR'] = airX.value 
+            if device and device['parameters']['airSwingHorizontal'].value == -1:
+                fanAuto = fanAuto | 1
+            
+            if device and device['parameters']['airSwingVertical'].value == -1:
+                fanAuto = fanAuto | 2
 
-        if airY is not None and airY.value is not -1:
-            parameters['airSwingUD'] = airY.value
+            if airX is not None:
+                if airX.value == -1:
+                    fanAuto = fanAuto | 1
+                else:
+                    fanAuto = fanAuto & ~1
+                    parameters['airSwingLR'] = airX.value
 
-        print("going to write parameters to {}".format(id))
-        print(parameters)
+            if airY is not None:
+                if airY.value == -1:
+                    fanAuto = fanAuto | 2
+                else:
+                    fanAuto = fanAuto & ~2
+                    print(airY.name)
+                    parameters['airSwingUD'] = airY.value
+
+            if fanAuto == 3:
+                parameters['fanAutoMode'] = constants.AirSwingAutoMode.Both.value
+            elif fanAuto == 1:
+                parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingLR.value
+            elif fanAuto == 2:
+                parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingUD.value
+            else:
+                parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled.value
+        
+        deviceGuid = self._deviceIndexer.get(id)
+        if(deviceGuid):
+            response = None
+
+            payload = {
+                "deviceGuid": deviceGuid,
+                "parameters": parameters
+            }
+
+            try:
+                response = requests.post(urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
+
+                if 2 != response.status_code // 100:
+                    raise ResponseError(response.status_code, response.text)
+            
+            except requests.exceptions.RequestException as ex:
+                raise RequestError(ex)
+
+            _validate_response(response)
+            _json = json.loads(response.text)
+          
+            return True
+
+        return False
 
     def _read_parameters(self, parameters = {}):
         value = {}
+
+        if 'insideTemperature' in parameters: 
+            value['temperatureInside'] = parameters['insideTemperature']
+
+        if 'outTemperature' in parameters:
+            value['temperatureOutside'] = parameters['outTemperature']
 
         if 'operate' in parameters:
             value['power'] = constants.Power(parameters['operate'])

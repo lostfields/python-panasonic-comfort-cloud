@@ -136,7 +136,7 @@ def main():
 
     args = parser.parse_args()
 
-    session = panasonic.Session(args.username, args.password, args.token)
+    session = panasonic.Session(args.username, args.password, args.token, False)
     session.login()
     try:
         if args.command == 'list':
