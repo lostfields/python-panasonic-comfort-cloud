@@ -1,7 +1,7 @@
 ## Command line usage
 
 ```
-usage: comfortcloud.py [-h] [-t TOKEN] username password {list,get,set} ...
+usage: pcomfortcloud.py [-h] [-t TOKEN] username password {list,get,set} ...
 
 Read or change status of Panasonic Climate devices
 
@@ -20,7 +20,7 @@ optional arguments:
 ```
 
 ```
-usage: comfortcloud.py username password get [-h] device
+usage: pcomfortcloud.py username password get [-h] device
 
 positional arguments:
   device      device number
@@ -30,7 +30,7 @@ optional arguments:
 ```
 
 ```
-usage: comfortcloud.py username password set [-h] 
+usage: pcomfortcloud.py username password set [-h] 
                                              [-p, --power {On,Off}]
                                              [-t, --temperature TEMPERATURE]
                                              [-s, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}]
