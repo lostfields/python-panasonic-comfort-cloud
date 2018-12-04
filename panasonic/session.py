@@ -161,6 +161,26 @@ class Session(object):
 
         return self._devices
 
+    def dump(self, id):
+        deviceGuid = self._deviceIndexer.get(id)
+
+        if(deviceGuid):
+            response = None
+            
+            try:
+                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
+
+                if 2 != response.status_code // 100:
+                    raise ResponseError(response.status_code, response.text)
+            
+            except requests.exceptions.RequestException as ex:
+                raise RequestError(ex)
+
+            _validate_response(response)
+            return json.loads(response.text)
+
+        return None
+
     def get_device(self, id):
         deviceGuid = self._deviceIndexer.get(id)
 

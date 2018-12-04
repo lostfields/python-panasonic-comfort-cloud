@@ -101,7 +101,7 @@ def main():
             panasonic.constants.EcoMode.Auto.name,
             panasonic.constants.EcoMode.Quiet.name,
             panasonic.constants.EcoMode.Powerful.name],
-        help='Eco mode')
+        help='Eco mode')    
 
     # set_parser.add_argument(
     #     '--airswingauto',
@@ -133,6 +133,15 @@ def main():
             panasonic.constants.AirSwingLR.RightMid.name,
             panasonic.constants.AirSwingLR.Right.name],
         help='Horizontal position of the air swing')
+
+    dump_parser = commandparser.add_parser(
+        'dump',
+        help="Dump data of a device")
+
+    dump_parser.add_argument(
+        dest='device',
+        type=int,
+        help='Device number #')    
 
     args = parser.parse_args()
 
@@ -181,6 +190,14 @@ def main():
                 kwargs['airSwingVertical'] = panasonic.constants.AirSwingUD[args.airSwingVertical]
 
             session.set_device(device['id'], **kwargs)
+
+        if args.command == 'dump':
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+
+            device = session.get_devices()[int(args.device) - 1]
+            
+            print_result(session.dump(device['id']))
     
     except panasonic.ResponseError as ex:
         print(ex.text)
