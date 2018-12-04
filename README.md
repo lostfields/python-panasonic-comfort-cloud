@@ -8,10 +8,11 @@ Read or change status of Panasonic Climate devices
 positional arguments:
   username              Username for Panasonic Comfort Cloud
   password              Password for Panasonic Comfort Cloud
-  {list,get,set}        commands
+  {list,get,set,dump}   commands
     list                Get a list of all devices
     get                 Get status of a device
     set                 Set status of a device
+    dump                Dump raw data of a device
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -60,4 +61,24 @@ optional arguments:
                         Vertical position of the air swing
   -x, --airswinghorizontal {Auto,Left,LeftMid,Mid,RightMid,Right}
                         Horizontal position of the air swing
+```
+
+## Module usage
+
+
+```python
+import pcomfortcloud
+
+session = pcomfortcloud.Session('user@example.com', 'mypassword')
+session.login()
+
+devices = session.get_devices()
+
+print(devices)
+
+print(session.get_device(devices[0].id))
+
+session.set_device(devices[0].id, 
+  power = pcomfortcloud.constants.Power.On,
+  temperature = 22.0)
 ```
