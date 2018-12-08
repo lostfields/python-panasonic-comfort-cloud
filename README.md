@@ -86,3 +86,10 @@ session.set_device(devices[0].id,
   power = pcomfortcloud.constants.Power.On,
   temperature = 22.0)
 ```
+
+## PyPi package
+can be found at https://pypi.org/project/pcomfortcloud/
+
+### How to publish package;
+- `python .\setup.py sdist bdist_wheel`
+- `python -m twine upload dist/*`

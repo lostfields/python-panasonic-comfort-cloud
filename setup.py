@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pcomfortcloud',
-    version='0.0.10',
+    version='0.0.11',
     description='Read and change status of Panasonic Comfort Cloud devices',
     long_description='A python module for reading and changing status of panasonic climate devices through Panasonic Comfort Cloud app api',
     url='http://github.com/lostfields/python-panasonic-comfort-cloud',
