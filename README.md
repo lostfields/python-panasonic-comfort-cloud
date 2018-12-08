@@ -18,6 +18,10 @@ optional arguments:
   -h, --help            show this help message and exit
   -t TOKEN, --token TOKEN
                         File to store token in
+  -s [BOOL], --skipVerify [BOOL]
+                        Skip Ssl verification
+  -r [BOOL], --raw [BOOL]
+                        Raw dump of response                        
 ```
 
 ```

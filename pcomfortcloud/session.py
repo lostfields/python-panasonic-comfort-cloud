@@ -51,7 +51,7 @@ class Session(object):
     
     """
 
-    def __init__(self, username, password, tokenFileName='~/.panasonic-token', verifySsl=True):
+    def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True):
         self._username = username
         self._password = password
         self._tokenFileName = os.path.expanduser(tokenFileName)
@@ -60,6 +60,7 @@ class Session(object):
         self._devices = None
         self._deviceIndexer = {}
         self._verifySsl = verifySsl
+        self._raw = raw
 
         if verifySsl == False: 
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -78,11 +79,16 @@ class Session(object):
             with open(self._tokenFileName, 'r') as cookieFile:
                 self._vid = cookieFile.read().strip()
 
+            if self._raw: print("--- token found")
+
             try:
                 self._get_groups()
 
             except ResponseError:
+                if self._raw: print("--- token probably expired")
+
                 self._vid = None
+                self._devices = None
                 os.remove(self._tokenFileName)
 
         if self._vid is None:
@@ -113,6 +119,8 @@ class Session(object):
             "password": self._password
         }
 
+        if self._raw: print("--- creating token by authenticating")
+
         try:
             response = requests.post(urls.login(), json=payload, headers=self._headers(), verify=self._verifySsl)
             if 2 != response.status_code // 100:
@@ -122,6 +130,12 @@ class Session(object):
             raise LoginError(ex)
 
         _validate_response(response)
+
+        if(self._raw is True):
+            print("--- raw beginning ---")
+            print(response.text)
+            print("--- raw ending    ---\n")
+
         self._vid = json.loads(response.text)['uToken']
 
     def _get_groups(self):
@@ -138,6 +152,13 @@ class Session(object):
             raise RequestError(ex)
 
         _validate_response(response)
+
+        if(self._raw is True):
+            print("--- _get_groups()")
+            print("--- raw beginning ---")
+            print(response.text)
+            print("--- raw ending    ---\n")
+
         self._groups = json.loads(response.text)
         self._devices = None
 
@@ -150,14 +171,15 @@ class Session(object):
 
             for group in self._groups['groupList']:
                 for device in group['deviceIdList']:
-                    self._deviceIndexer[device['deviceHashGuid']] = device['deviceGuid']
-                    
-                    self._devices.append({
-                        'id': device['deviceHashGuid'],
-                        'name': device['deviceName'],
-                        'group': group['groupName'],
-                        'model': device['deviceModuleNumber']
-                    })
+                    if device:
+                        self._deviceIndexer[device['deviceHashGuid']] = device['deviceGuid']
+                        
+                        self._devices.append({
+                            'id': device['deviceHashGuid'],
+                            'name': device['deviceName'],
+                            'group': group['groupName'],
+                            'model': device['deviceModuleNumber']
+                        })
 
         return self._devices
 
@@ -197,8 +219,15 @@ class Session(object):
                 raise RequestError(ex)
 
             _validate_response(response)
-            _json = json.loads(response.text)
 
+            if(self._raw is True):
+                print("--- get_device()")
+                print("--- raw beginning ---")
+                print(response.text)
+                print("--- raw ending    ---")
+
+
+            _json = json.loads(response.text)
             return {
                 'id': id,
                 'parameters': self._read_parameters(_json['parameters'])
@@ -283,6 +312,12 @@ class Session(object):
                 "parameters": parameters
             }
 
+            if(self._raw is True):
+                print("--- set_device()")
+                print("--- raw out beginning ---")
+                print(payload)
+                print("--- raw out ending    ---")
+
             try:
                 response = requests.post(urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
 
@@ -293,6 +328,12 @@ class Session(object):
                 raise RequestError(ex)
 
             _validate_response(response)
+
+            if(self._raw is True):
+                print("--- raw in beginning ---")
+                print(response.text)
+                print("--- raw in ending    ---\n")
+
             _json = json.loads(response.text)
           
             return True

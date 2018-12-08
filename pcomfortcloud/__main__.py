@@ -16,6 +16,14 @@ def print_result(obj, indent = 0):
         else:
             print(" "*indent + "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def main():
     """ Start pcomfortcloud Comfort Cloud command line """
 
@@ -34,6 +42,18 @@ def main():
         '-t', '--token',
         help='File to store token in',
         default='~/.pcomfortcloud-token')
+
+    parser.add_argument(
+        '-s', '--skipVerify',
+        help='Skip Ssl verification if set as True',
+        type=str2bool, nargs='?', const=True,
+        default=False)
+
+    parser.add_argument(
+        '-r', '--raw',
+        help='Raw dump of response',
+        type=str2bool, nargs='?', const=True,
+        default=False)
 
     commandparser = parser.add_subparsers(
         help='commands',
@@ -141,25 +161,25 @@ def main():
     dump_parser.add_argument(
         dest='device',
         type=int,
-        help='Device number #')    
+        help='Device number 1-x')    
 
     args = parser.parse_args()
 
-    session = pcomfortcloud.Session(args.username, args.password, args.token, False)
+    session = pcomfortcloud.Session(args.username, args.password, args.token, args.raw, args.skipVerify == False)
     session.login()
     try:
         if args.command == 'list':
-            print("list of devices and its device id #")
+            print("list of devices and its device id (1-x)")
             for idx, device in enumerate(session.get_devices()):
                 if(idx > 0):
                     print('')
                 
-                print("Device #{}".format(idx + 1))
+                print("device #{}".format(idx + 1))
                 print_result(device, 4)
                 
         if args.command == 'get':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]            
             print("reading from device '{}' ({})".format(device['name'], device['id']))
@@ -168,7 +188,7 @@ def main():
 
         if args.command == 'set':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
             print("writing to device '{}' ({})".format(device['name'], device['id']))
@@ -197,7 +217,7 @@ def main():
 
         if args.command == 'dump':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("Device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
             
