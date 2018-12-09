@@ -6,6 +6,7 @@ import json
 import requests
 import os
 import urllib3
+import hashlib
 
 from . import urls
 from . import constants
@@ -172,13 +173,18 @@ class Session(object):
             for group in self._groups['groupList']:
                 for device in group['deviceIdList']:
                     if device:
-                        self._deviceIndexer[device['deviceHashGuid']] = device['deviceGuid']
-                        
+                        id = None
+                        if 'deviceHashGuid' in device:
+                            id = device['deviceHashGuid']
+                        else:
+                            id = hashlib.md5(device['deviceGuid'].encode('utf-8')).hexdigest()
+
+                        self._deviceIndexer[id] = device['deviceGuid']
                         self._devices.append({
-                            'id': device['deviceHashGuid'],
+                            'id': id,
                             'name': device['deviceName'],
                             'group': group['groupName'],
-                            'model': device['deviceModuleNumber']
+                            'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
                         })
 
         return self._devices

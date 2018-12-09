@@ -1,3 +1,6 @@
+# python-panasonic-comfort-cloud
+A python module for reading and changing status of panasonic climate devices through Panasonic Comfort Cloud app api
+
 ## Command line usage
 
 ```
@@ -80,9 +83,9 @@ devices = session.get_devices()
 
 print(devices)
 
-print(session.get_device(devices[0].id))
+print(session.get_device(devices[0]['id']))
 
-session.set_device(devices[0].id, 
+session.set_device(devices[0]['id'], 
   power = pcomfortcloud.constants.Power.On,
   temperature = 22.0)
 ```

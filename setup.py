@@ -2,11 +2,15 @@
 
 from setuptools import setup
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
     name='pcomfortcloud',
-    version='0.0.11',
+    version='0.0.13',
     description='Read and change status of Panasonic Comfort Cloud devices',
-    long_description='A python module for reading and changing status of panasonic climate devices through Panasonic Comfort Cloud app api',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='http://github.com/lostfields/python-panasonic-comfort-cloud',
     author='Lostfields',
     license='MIT',
