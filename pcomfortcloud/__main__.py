@@ -16,14 +16,6 @@ def print_result(obj, indent = 0):
         else:
             print(" "*indent + "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
 def main():
     """ Start pcomfortcloud Comfort Cloud command line """
 
@@ -45,15 +37,13 @@ def main():
 
     parser.add_argument(
         '-s', '--skipVerify',
-        help='Skip Ssl verification if set as True',
-        type=str2bool, nargs='?', const=True,
-        default=False)
+        help='Skip TLS verification',
+        action='store_true')
 
     parser.add_argument(
         '-r', '--raw',
         help='Raw dump of response',
-        type=str2bool, nargs='?', const=True,
-        default=False)
+        action='store_true')
 
     commandparser = parser.add_subparsers(
         help='commands',
