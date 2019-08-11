@@ -13,6 +13,11 @@ def print_result(obj, indent = 0):
             print_result(value, indent + 4)
         elif isinstance(value, Enum):
             print(" "*indent + "{0: <{width}}: {1}".format(key, value.name, width=25-indent))
+        elif isinstance(value, list):
+            print(" "*indent + "{0: <{width}}:".format(key, width=25-indent))
+            for elt in value:
+                print_result(elt, indent + 4)
+                print("")
         else:
             print(" "*indent + "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
