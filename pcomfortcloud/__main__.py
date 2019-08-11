@@ -58,7 +58,7 @@ def main():
     commandparser = parser.add_subparsers(
         help='commands',
         dest='command')
- 
+
     commandparser.add_parser(
         'list',
         help="Get a list of all devices")
@@ -121,7 +121,7 @@ def main():
             pcomfortcloud.constants.EcoMode.Auto.name,
             pcomfortcloud.constants.EcoMode.Quiet.name,
             pcomfortcloud.constants.EcoMode.Powerful.name],
-        help='Eco mode')    
+        help='Eco mode')
 
     # set_parser.add_argument(
     #     '--airswingauto',
@@ -161,7 +161,7 @@ def main():
     dump_parser.add_argument(
         dest='device',
         type=int,
-        help='Device number 1-x')    
+        help='Device number 1-x')
 
     args = parser.parse_args()
 
@@ -173,15 +173,15 @@ def main():
             for idx, device in enumerate(session.get_devices()):
                 if(idx > 0):
                     print('')
-                
+
                 print("device #{}".format(idx + 1))
                 print_result(device, 4)
-                
+
         if args.command == 'get':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
                 raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
-            device = session.get_devices()[int(args.device) - 1]            
+            device = session.get_devices()[int(args.device) - 1]
             print("reading from device '{}' ({})".format(device['name'], device['id']))
 
             print_result( session.get_device(device['id']) )
@@ -200,10 +200,10 @@ def main():
 
             if args.temperature is not None:
                 kwargs['temperature'] = args.temperature
-                
+
             if args.fanSpeed is not None:
                 kwargs['fanSpeed'] = pcomfortcloud.constants.FanSpeed[args.fanSpeed]
-            
+
             if args.mode is not None:
                 kwargs['mode'] = pcomfortcloud.constants.OperationMode[args.mode]
 
@@ -220,9 +220,9 @@ def main():
                 raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
-            
+
             print_result(session.dump(device['id']))
-    
+
     except pcomfortcloud.ResponseError as ex:
         print(ex.text)
 

@@ -24,7 +24,7 @@ optional arguments:
   -s [BOOL], --skipVerify [BOOL]
                         Skip Ssl verification
   -r [BOOL], --raw [BOOL]
-                        Raw dump of response                        
+                        Raw dump of response
 ```
 
 ```
@@ -38,7 +38,7 @@ optional arguments:
 ```
 
 ```
-usage: pcomfortcloud.py username password set [-h] 
+usage: pcomfortcloud.py username password set [-h]
                                              [-p, --power {On,Off}]
                                              [-t, --temperature TEMPERATURE]
                                              [-s, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}]
@@ -52,9 +52,9 @@ positional arguments:
   device                Device number
 
 optional arguments:
-  -h, --help            
+  -h, --help
                         show this help message and exit
-  -p, --power {On,Off}      
+  -p, --power {On,Off}
                         Power mode
   -t, --temperature TEMPERATURE
                         Temperature in decimal format
@@ -85,7 +85,7 @@ print(devices)
 
 print(session.get_device(devices[0]['id']))
 
-session.set_device(devices[0]['id'], 
+session.set_device(devices[0]['id'],
   power = pcomfortcloud.constants.Power.On,
   temperature = 22.0)
 ```

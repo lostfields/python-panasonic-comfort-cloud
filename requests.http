@@ -14,7 +14,7 @@ Content-Type: application/json
     "password": "***"
 }
 
-### 
+###
 
 # @name device
 GET https://accsmart.panasonic.com/device/group HTTP/1.1
@@ -56,7 +56,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-    "dataMode": 0, "date": "20181203", "deviceGuid": "{{device.response.body.$.groupList[0].deviceIdList[0].deviceGuid}}", "osTimezone": "+01:00" 
+    "dataMode": 0, "date": "20181203", "deviceGuid": "{{device.response.body.$.groupList[0].deviceIdList[0].deviceGuid}}", "osTimezone": "+01:00"
 }
 
 ###

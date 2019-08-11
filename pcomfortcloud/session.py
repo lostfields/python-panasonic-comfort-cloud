@@ -45,11 +45,11 @@ class ResponseError(Error):
 
 class Session(object):
     """ Verisure app session
-    
+
     Args:
         username (str): Username used to login to verisure app
         password (str): Password used to login to verisure app
-    
+
     """
 
     def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True):
@@ -63,7 +63,7 @@ class Session(object):
         self._verifySsl = verifySsl
         self._raw = raw
 
-        if verifySsl == False: 
+        if verifySsl == False:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     def __enter__(self):
@@ -72,7 +72,7 @@ class Session(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logout()
-        
+
     def login(self):
         """ Login to verisure app api """
 
@@ -111,7 +111,7 @@ class Session(object):
             "Content-Type": "application/json"
         }
 
-    def _create_token(self): 
+    def _create_token(self):
         response = None
 
         payload = {
@@ -126,7 +126,7 @@ class Session(object):
             response = requests.post(urls.login(), json=payload, headers=self._headers(), verify=self._verifySsl)
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
-        
+
         except requests.exceptions.RequestException as ex:
             raise LoginError(ex)
 
@@ -148,7 +148,7 @@ class Session(object):
 
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
-        
+
         except requests.exceptions.RequestException as ex:
             raise RequestError(ex)
 
@@ -194,13 +194,13 @@ class Session(object):
 
         if(deviceGuid):
             response = None
-            
+
             try:
                 response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
-            
+
             except requests.exceptions.RequestException as ex:
                 raise RequestError(ex)
 
@@ -214,13 +214,13 @@ class Session(object):
 
         if(deviceGuid):
             response = None
-            
+
             try:
                 response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
-            
+
             except requests.exceptions.RequestException as ex:
                 raise RequestError(ex)
 
@@ -243,7 +243,7 @@ class Session(object):
 
     def set_device(self, id, **kwargs):
         """ Set parameters of device
-        
+
         Args:
             id  (str): Id of the device
             kwargs   : {temperature=float}, {mode=OperationMode}, {fanSpeed=FanSpeed}, {power=Power}, {airSwingHorizontal=}, {airSwingVertical=}, {eco=EcoMode}
@@ -273,7 +273,7 @@ class Session(object):
                 if key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
                     airY = value
 
-        
+
         # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
         if airX is not None or airY is not None:
             fanAuto = 0
@@ -281,7 +281,7 @@ class Session(object):
 
             if device and device['parameters']['airSwingHorizontal'].value == -1:
                 fanAuto = fanAuto | 1
-            
+
             if device and device['parameters']['airSwingVertical'].value == -1:
                 fanAuto = fanAuto | 2
 
@@ -308,7 +308,7 @@ class Session(object):
                 parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingUD.value
             else:
                 parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled.value
-        
+
         deviceGuid = self._deviceIndexer.get(id)
         if(deviceGuid):
             response = None
@@ -329,7 +329,7 @@ class Session(object):
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
-            
+
             except requests.exceptions.RequestException as ex:
                 raise RequestError(ex)
 
@@ -341,7 +341,7 @@ class Session(object):
                 print("--- raw in ending    ---\n")
 
             _json = json.loads(response.text)
-          
+
             return True
 
         return False
@@ -349,7 +349,7 @@ class Session(object):
     def _read_parameters(self, parameters = {}):
         value = {}
 
-        if 'insideTemperature' in parameters: 
+        if 'insideTemperature' in parameters:
             value['temperatureInside'] = parameters['insideTemperature']
 
         if 'outTemperature' in parameters:
@@ -363,7 +363,7 @@ class Session(object):
 
         if 'operationMode' in parameters:
             value['mode'] = constants.OperationMode(parameters['operationMode'])
-            
+
         if 'fanSpeed' in parameters:
             value['fanSpeed'] = constants.FanSpeed(parameters['fanSpeed'])
 
@@ -375,7 +375,7 @@ class Session(object):
 
         if 'ecoMode' in parameters:
             value['eco'] = constants.EcoMode(parameters['ecoMode'])
-        
+
         if 'fanAutoMode' in parameters:
             if parameters['fanAutoMode'] == constants.AirSwingAutoMode.Both.value:
                 value['airSwingHorizontal'] = constants.AirSwingLR.Auto
@@ -385,4 +385,4 @@ class Session(object):
             elif parameters['fanAutoMode'] == constants.AirSwingAutoMode.AirSwingUD.value:
                 value['airSwingVertical'] = constants.AirSwingUD.Auto
 
-        return value       
+        return value
