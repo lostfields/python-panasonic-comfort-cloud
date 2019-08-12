@@ -207,6 +207,9 @@ def main():
             if args.mode is not None:
                 kwargs['mode'] = pcomfortcloud.constants.OperationMode[args.mode]
 
+            if args.eco is not None:
+                kwargs['eco'] = pcomfortcloud.constants.EcoMode[args.eco]
+
             if args.airSwingHorizontal is not None:
                 kwargs['airSwingHorizontal'] = pcomfortcloud.constants.AirSwingLR[args.airSwingHorizontal]
 
