@@ -272,6 +272,9 @@ class Session(object):
 
                 if key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
                     airY = value
+                
+                if key == 'eco' and isinstance(value, constants.EcoMode):
+                    parameters['ecoMode'] = value.value
 
 
         # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
