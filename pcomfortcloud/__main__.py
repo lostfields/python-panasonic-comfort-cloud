@@ -163,6 +163,25 @@ def main():
         type=int,
         help='Device number 1-x')
 
+    history_parser = commandparser.add_parser(
+        'history',
+        help="Dump history of a device")
+
+    history_parser.add_argument(
+        dest='device',
+        type=int,
+        help='Device number 1-x')
+
+    history_parser.add_argument(
+        dest='mode',
+        type=str,
+        help='mode (Day, Week, Month, Year)')
+
+    history_parser.add_argument(
+        dest='date',
+        type=str,
+        help='date of day like 20190807')
+
     args = parser.parse_args()
 
     session = pcomfortcloud.Session(args.username, args.password, args.token, args.raw, args.skipVerify == False)
@@ -225,6 +244,14 @@ def main():
             device = session.get_devices()[int(args.device) - 1]
 
             print_result(session.dump(device['id']))
+
+        if args.command == 'history':
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+
+            device = session.get_devices()[int(args.device) - 1]
+
+            print_result(session.history(device['id'], args.mode, args.date))
 
     except pcomfortcloud.ResponseError as ex:
         print(ex.text)

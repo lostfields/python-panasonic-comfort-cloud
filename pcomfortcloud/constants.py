@@ -45,3 +45,9 @@ class FanSpeed(Enum):
     Mid = 3
     HighMid = 4
     High = 5
+
+class dataMode(Enum):
+    Day = 0
+    Week = 1
+    Month = 2
+    Year = 4

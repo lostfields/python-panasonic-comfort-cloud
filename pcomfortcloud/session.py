@@ -212,6 +212,38 @@ class Session(object):
 
         return None
 
+    def history(self, id, mode, date, tz="+01:00"):
+        deviceGuid = self._deviceIndexer.get(id)
+
+        if(deviceGuid):
+            response = None
+
+            try:
+                dataMode = constants.dataMode[mode].value
+            except KeyError:
+                raise Exception("Wrong mode parameter")
+
+            payload = {
+                "deviceGuid": deviceGuid,
+                "dataMode": dataMode,
+                "date": date,
+                "osTimezone": tz
+            }
+
+            try:
+                response = requests.post(urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
+
+                if 2 != response.status_code // 100:
+                    raise ResponseError(response.status_code, response.text)
+
+            except requests.exceptions.RequestException as ex:
+                raise RequestError(ex)
+
+            _validate_response(response)
+            return json.loads(response.text)
+
+        return None
+
     def get_device(self, id):
         deviceGuid = self._deviceIndexer.get(id)
 
