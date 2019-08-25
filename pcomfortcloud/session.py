@@ -60,11 +60,14 @@ class Session(object):
         self._groups = None
         self._devices = None
         self._deviceIndexer = {}
-        self._verifySsl = verifySsl
         self._raw = raw
 
         if verifySsl == False:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            self._verifySsl = verifySsl
+        else:
+            self._verifySsl = os.path.join(os.path.dirname(__file__),
+                    "CertificateChain.txt")
 
     def __enter__(self):
         self.login()
