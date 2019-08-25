@@ -24,7 +24,7 @@ setup(
     install_requires=['requests>=2.20.0'],
     packages=['pcomfortcloud'],
     package_data={'': ['CertificateChain.txt']},
-    zip_safe=True,
+    zip_safe=False,
     entry_points={
         'console_scripts': [
             'pcomfortcloud=pcomfortcloud.__main__:main',
