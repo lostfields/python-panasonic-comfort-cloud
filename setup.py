@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='pcomfortcloud',
-    version='0.0.13',
+    version='0.0.14',
     description='Read and change status of Panasonic Comfort Cloud devices',
     long_description=long_description,
     long_description_content_type="text/markdown",
