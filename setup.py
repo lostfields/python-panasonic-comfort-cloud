@@ -23,7 +23,7 @@ setup(
     keywords='home automation panasonic climate',
     install_requires=['requests>=2.20.0'],
     packages=['pcomfortcloud'],
-    package_data={'': ['CertificateChain.txt']},
+    package_data={'': ['certificatechain.pem']},
     zip_safe=False,
     entry_points={
         'console_scripts': [

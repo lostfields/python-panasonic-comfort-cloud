@@ -67,7 +67,7 @@ class Session(object):
             self._verifySsl = verifySsl
         else:
             self._verifySsl = os.path.join(os.path.dirname(__file__),
-                    "CertificateChain.txt")
+                    "certificatechain.pem")
 
     def __enter__(self):
         self.login()
