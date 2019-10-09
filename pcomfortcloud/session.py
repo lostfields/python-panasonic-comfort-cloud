@@ -240,7 +240,18 @@ class Session(object):
                 raise RequestError(ex)
 
             _validate_response(response)
-            return json.loads(response.text)
+
+            if(self._raw is True):
+                print("--- history()")
+                print("--- raw beginning ---")
+                print(response.text)
+                print("--- raw ending    ---")
+
+            _json = json.loads(response.text)
+            return {
+                'id': id,
+                'parameters': self._read_parameters(_json)
+            }
 
         return None
 
