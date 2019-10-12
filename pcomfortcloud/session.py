@@ -398,17 +398,17 @@ class Session(object):
     def _read_parameters(self, parameters = {}):
         value = {}
 
-        if 'insideTemperature' in parameters:
-            value['temperatureInside'] = parameters['insideTemperature']
-
-        if 'outTemperature' in parameters:
-            value['temperatureOutside'] = parameters['outTemperature']
+        _convert = {
+                'insideTemperature': 'temperatureInside',
+                'outTemperature': 'temperatureOutside',
+                'temperatureSet': 'temperature',
+            }
+        for key in _convert:
+            if key in parameters:
+                value[_convert[key]] = parameters[key]
 
         if 'operate' in parameters:
             value['power'] = constants.Power(parameters['operate'])
-
-        if 'temperatureSet' in parameters:
-            value['temperature'] = parameters['temperatureSet']
 
         if 'operationMode' in parameters:
             value['mode'] = constants.OperationMode(parameters['operationMode'])
