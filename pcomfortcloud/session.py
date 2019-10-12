@@ -402,6 +402,10 @@ class Session(object):
                 'insideTemperature': 'temperatureInside',
                 'outTemperature': 'temperatureOutside',
                 'temperatureSet': 'temperature',
+                'currencyUnit': 'currencyUnit',
+                'energyConsumption': 'energyConsumption',
+                'estimatedCost': 'estimatedCost',
+                'historyDataList': 'historyDataList',
             }
         for key in _convert:
             if key in parameters:
