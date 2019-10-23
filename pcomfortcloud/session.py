@@ -212,6 +212,49 @@ class Session(object):
 
         return None
 
+    def history(self, id, mode, date, tz="+01:00"):
+        deviceGuid = self._deviceIndexer.get(id)
+
+        if(deviceGuid):
+            response = None
+
+            try:
+                dataMode = constants.dataMode[mode].value
+            except KeyError:
+                raise Exception("Wrong mode parameter")
+
+            payload = {
+                "deviceGuid": deviceGuid,
+                "dataMode": dataMode,
+                "date": date,
+                "osTimezone": tz
+            }
+
+            try:
+                response = requests.post(urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
+
+                if 2 != response.status_code // 100:
+                    raise ResponseError(response.status_code, response.text)
+
+            except requests.exceptions.RequestException as ex:
+                raise RequestError(ex)
+
+            _validate_response(response)
+
+            if(self._raw is True):
+                print("--- history()")
+                print("--- raw beginning ---")
+                print(response.text)
+                print("--- raw ending    ---")
+
+            _json = json.loads(response.text)
+            return {
+                'id': id,
+                'parameters': self._read_parameters(_json)
+            }
+
+        return None
+
     def get_device(self, id):
         deviceGuid = self._deviceIndexer.get(id)
 
@@ -355,17 +398,21 @@ class Session(object):
     def _read_parameters(self, parameters = {}):
         value = {}
 
-        if 'insideTemperature' in parameters:
-            value['temperatureInside'] = parameters['insideTemperature']
-
-        if 'outTemperature' in parameters:
-            value['temperatureOutside'] = parameters['outTemperature']
+        _convert = {
+                'insideTemperature': 'temperatureInside',
+                'outTemperature': 'temperatureOutside',
+                'temperatureSet': 'temperature',
+                'currencyUnit': 'currencyUnit',
+                'energyConsumption': 'energyConsumption',
+                'estimatedCost': 'estimatedCost',
+                'historyDataList': 'historyDataList',
+            }
+        for key in _convert:
+            if key in parameters:
+                value[_convert[key]] = parameters[key]
 
         if 'operate' in parameters:
             value['power'] = constants.Power(parameters['operate'])
-
-        if 'temperatureSet' in parameters:
-            value['temperature'] = parameters['temperatureSet']
 
         if 'operationMode' in parameters:
             value['mode'] = constants.OperationMode(parameters['operationMode'])

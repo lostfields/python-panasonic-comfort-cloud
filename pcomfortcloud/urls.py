@@ -31,3 +31,8 @@ def control():
     return '{base_url}/deviceStatus/control'.format(
         base_url=BASE_URL
     )
+
+def history():
+    return '{base_url}/deviceHistoryData'.format(
+        base_url=BASE_URL,
+    )
