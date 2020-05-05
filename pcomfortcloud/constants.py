@@ -51,3 +51,8 @@ class dataMode(Enum):
     Week = 1
     Month = 2
     Year = 4
+
+class NanoeMode(Enum):
+    Unavailable = 0
+    Off = 1
+    On = 2
