@@ -128,6 +128,13 @@ def main():
             pcomfortcloud.constants.EcoMode.Powerful.name],
         help='Eco mode')
 
+    set_parser.add_argument(
+        '-n', '--nanoe',
+        choices=[
+            pcomfortcloud.constants.NanoeMode.On.name,
+            pcomfortcloud.constants.NanoeMode.Off.name],
+        help='Nanoe mode')
+
     # set_parser.add_argument(
     #     '--airswingauto',
     #     choices=[
@@ -233,6 +240,9 @@ def main():
 
             if args.eco is not None:
                 kwargs['eco'] = pcomfortcloud.constants.EcoMode[args.eco]
+
+            if args.nanoe is not None:
+                kwargs['nanoe'] = pcomfortcloud.constants.NanoeMode[args.nanoe]
 
             if args.airSwingHorizontal is not None:
                 kwargs['airSwingHorizontal'] = pcomfortcloud.constants.AirSwingLR[args.airSwingHorizontal]
