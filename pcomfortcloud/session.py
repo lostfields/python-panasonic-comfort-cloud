@@ -322,7 +322,7 @@ class Session(object):
                 if key == 'eco' and isinstance(value, constants.EcoMode):
                     parameters['ecoMode'] = value.value
 
-                if key == 'nanoe' and isinstance(value, constants.NanoeMode):
+                if key == 'nanoe' and isinstance(value, constants.NanoeMode) and value != constants.NanoeMode.Unavailable:
                     parameters['nanoe'] = value.value
 
 
