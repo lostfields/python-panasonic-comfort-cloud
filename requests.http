@@ -14,7 +14,7 @@ Content-Type: application/json
     "password": "***"
 }
 
-###
+### 
 
 # @name device
 GET https://accsmart.panasonic.com/device/group HTTP/1.1
@@ -45,18 +45,19 @@ User-Agent: G-RAC
 Accept: application/json
 Content-Type: application/json
 
+
 ###
 
 POST https://accsmart.panasonic.com/deviceHistoryData HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 1.3.0
+X-APP-VERSION: 2.0.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
 Content-Type: application/json
 
-{
-    "dataMode": 0, "date": "20181203", "deviceGuid": "{{device.response.body.$.groupList[0].deviceIdList[0].deviceGuid}}", "osTimezone": "+01:00"
+{ 
+    "dataMode": 0, "date": "20190610", "deviceGuid": "{{device.response.body.$.groupList[0].deviceIdList[0].deviceGuid}}", "osTimezone": "+01:00" 
 }
 
 ###
