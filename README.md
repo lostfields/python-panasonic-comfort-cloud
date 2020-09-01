@@ -41,7 +41,7 @@ optional arguments:
 usage: pcomfortcloud.py username password set [-h]
                                              [-p, --power {On,Off}]
                                              [-t, --temperature TEMPERATURE]
-                                             [-s, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}]
+                                             [-f, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}]
                                              [-m, --mode {Auto,Cool,Dry,Heat,Fan}]
                                              [-e, --eco {Auto,Quiet,Powerful}]
                                              [-y, --airswingvertical {Auto,Down,DownMid,Mid,UpMid,Up}]
@@ -58,7 +58,7 @@ optional arguments:
                         Power mode
   -t, --temperature TEMPERATURE
                         Temperature in decimal format
-  -s, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}
+  -f, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}
                         Fan speed
   -m, --mode {Auto,Cool,Dry,Heat,Fan}
                         Operation mode
