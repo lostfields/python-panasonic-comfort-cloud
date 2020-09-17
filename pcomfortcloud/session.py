@@ -174,7 +174,12 @@ class Session(object):
             self._devices = []
 
             for group in self._groups['groupList']:
-                for device in group['deviceIdList']:
+                if 'deviceList' in group:
+                    list = group.get('deviceList', [])
+                else:
+                    list = group.get('deviceIdList', [])
+
+                for device in list:
                     if device:
                         id = None
                         if 'deviceHashGuid' in device:
