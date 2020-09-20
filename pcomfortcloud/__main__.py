@@ -133,7 +133,7 @@ def main():
         choices=[
             pcomfortcloud.constants.NanoeMode.On.name,
             pcomfortcloud.constants.NanoeMode.Off.name,
-            pcomfortcloud.constants.NanoeMode.NanoG.name,
+            pcomfortcloud.constants.NanoeMode.ModeG.name,
             pcomfortcloud.constants.NanoeMode.All.name],
         help='Nanoe mode')
 
