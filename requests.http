@@ -14,6 +14,28 @@ Content-Type: application/json
     "password": "***"
 }
 
+###
+
+GET https://accsmart.panasonic.com/auth/agreement/status/ HTTP/1.1
+X-APP-TYPE: 1
+X-APP-VERSION: 2.0.0
+X-User-Authorization: {{login.response.body.$.uToken}}
+User-Agent: G-RAC
+Accept: application/json
+Content-Type: application/json
+
+###
+# type may be 0,1,2
+PUT https://accsmart.panasonic.com/auth/agreement/status/ HTTP/1.1
+X-APP-TYPE: 1
+X-APP-VERSION: 2.0.0
+X-User-Authorization: {{login.response.body.$.uToken}}
+User-Agent: G-RAC
+Accept: application/json
+Content-Type: application/json
+
+{ "agreementStatus": 0, "type": 0 } 
+
 ### 
 
 # @name device

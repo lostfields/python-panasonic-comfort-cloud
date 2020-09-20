@@ -56,3 +56,5 @@ class NanoeMode(Enum):
     Unavailable = 0
     Off = 1
     On = 2
+    ModeG = 3
+    All = 4

@@ -132,7 +132,9 @@ def main():
         '-n', '--nanoe',
         choices=[
             pcomfortcloud.constants.NanoeMode.On.name,
-            pcomfortcloud.constants.NanoeMode.Off.name],
+            pcomfortcloud.constants.NanoeMode.Off.name,
+            pcomfortcloud.constants.NanoeMode.NanoG.name,
+            pcomfortcloud.constants.NanoeMode.All.name],
         help='Nanoe mode')
 
     # set_parser.add_argument(
