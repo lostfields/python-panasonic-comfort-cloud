@@ -18,13 +18,13 @@ def get_groups():
 def status(guid):
     return '{base_url}/deviceStatus/{guid}'.format(
         base_url=BASE_URL,
-        guid=guid
+        guid=quote_plus(guid).replace('%2f', 'f')
     )
 
 def statusCache(guid):
     return '{base_url}/deviceStatus/now/{guid}'.format(
         base_url=BASE_URL,
-        guid=guid
+        guid=quote_plus(guid).replace('%2f', 'f')
     )
 
 def control():
