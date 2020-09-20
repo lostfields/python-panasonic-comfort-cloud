@@ -21,11 +21,11 @@ class AirSwingUD(Enum):
 
 class AirSwingLR(Enum):
     Auto = -1
-    Left = 0
-    LeftMid = 4
+    Left = 1
+    LeftMid = 5
     Mid = 2
-    RightMid = 3
-    Right = 1
+    RightMid = 4
+    Right = 0
 
 class EcoMode(Enum):
     Auto = 0
