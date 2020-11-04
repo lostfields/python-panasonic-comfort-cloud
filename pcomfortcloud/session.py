@@ -110,6 +110,7 @@ class Session(object):
             "X-APP-TYPE": "1",
             "X-APP-VERSION": "2.0.0",
             "X-User-Authorization": self._vid,
+            "User-Agent": "Python-Panasonic-Comfort-Cloud",
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
