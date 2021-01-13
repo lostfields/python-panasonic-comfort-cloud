@@ -108,7 +108,7 @@ class Session(object):
     def _headers(self):
         return {
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "2.0.0",
+            "X-APP-VERSION": "1.9.0",
             "X-User-Authorization": self._vid,
             "User-Agent": "Python-Panasonic-Comfort-Cloud",
             "Accept": "application/json",
