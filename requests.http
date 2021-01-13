@@ -16,9 +16,59 @@ Content-Type: application/json
 
 ###
 
+GET https://accsmart.panasonic.com/auth/agreement/status/1 HTTP/1.1
+X-User-Authorization: ABn5iAlFvmDjRmIe1BWZ6iMSc48T0nul
+X-APP-TYPE: 1
+X-APP-VERSION: 1.8.0
+Accept: application/json; charset=utf-8
+Content-Type: application/json
+User-Agent: G-RAC
+Host: accsmart.panasonic.com
+Connection: Keep-Alive
+Accept-Encoding: gzip
+
+GET https://accsmart.panasonic.com/auth/agreement/status/2 HTTP/1.1
+X-User-Authorization: ABn5iAlFvmDjRmIe1BWZ6iMSc48T0nul
+X-APP-TYPE: 1
+X-APP-VERSION: 1.8.0
+Accept: application/json; charset=utf-8
+Content-Type: application/json
+User-Agent: G-RAC
+Host: accsmart.panasonic.com
+Connection: Keep-Alive
+Accept-Encoding: gzip
+
+GET https://accsmart.panasonic.com/auth/agreement/documents/0/2 HTTP/1.1
+X-User-Authorization: ABn5iAlFvmDjRmIe1BWZ6iMSc48T0nul
+X-APP-TYPE: 1
+X-APP-VERSION: 1.8.0
+Accept: application/json; charset=utf-8
+Content-Type: application/json
+User-Agent: G-RAC
+Host: accsmart.panasonic.com
+Connection: Keep-Alive
+Accept-Encoding: gzip
+
+PUT https://accsmart.panasonic.com/auth/agreement/status/ HTTP/1.1
+X-User-Authorization: ABn5iAlFvmDjRmIe1BWZ6iMSc48T0nul
+X-APP-TYPE: 1
+X-APP-VERSION: 1.8.0
+Accept: application/json; charset=utf-8
+User-Agent: G-RAC
+Content-Type: application/json; charset=utf-8
+Content-Length: 30
+Host: accsmart.panasonic.com
+Connection: Keep-Alive
+Accept-Encoding: gzip
+
+{"agreementStatus":1,"type":2}
+
+###
+
+
 GET https://accsmart.panasonic.com/auth/agreement/status/ HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -28,7 +78,7 @@ Content-Type: application/json
 # type may be 0,1,2
 PUT https://accsmart.panasonic.com/auth/agreement/status/ HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -41,7 +91,7 @@ Content-Type: application/json
 # @name device
 GET https://accsmart.panasonic.com/device/group HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -49,9 +99,9 @@ Content-Type: application/json
 
 ###
 
-GET https://accsmart.panasonic.com/deviceStatus/now/{{device.response.body.$.groupList[0].deviceIdList[0].deviceGuid}} HTTP/1.1
+GET https://accsmart.panasonic.com/deviceStatus/now/{{device.response.body.$.groupList[0].deviceList[0].deviceGuid}} HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -61,7 +111,7 @@ Content-Type: application/json
 
 GET https://accsmart.panasonic.com/deviceStatus/{{device.response.body.$.groupList[0].deviceIdList[0].deviceGuid}} HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -72,7 +122,7 @@ Content-Type: application/json
 
 POST https://accsmart.panasonic.com/deviceHistoryData HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -86,7 +136,7 @@ Content-Type: application/json
 
 POST https://accsmart.panasonic.com/deviceStatus/control HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
@@ -110,7 +160,7 @@ Content-Type: application/json
 
 POST https://accsmart.panasonic.com/deviceStatus/control HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 2.0.0
+X-APP-VERSION: 1.9.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json
