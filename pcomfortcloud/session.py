@@ -111,7 +111,7 @@ class Session(object):
             "X-APP-VERSION": "1.10.0",
             "X-User-Authorization": self._vid,
             "User-Agent": "G-RAC",
-            "Accept": "application/json",
+            "Accept": "application/json; charset=utf-8",
             "Content-Type": "application/json"
         }
 
