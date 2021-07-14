@@ -58,3 +58,5 @@ class NanoeMode(Enum):
     On = 2
     ModeG = 3
     All = 4
+
+DEFAULT_X_APP_VERSION = "1.12.0"

@@ -52,15 +52,19 @@ class Session(object):
 
     """
 
-    def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True):
+    def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True, appVersion='auto'):
         self._username = username
         self._password = password
         self._tokenFileName = os.path.expanduser(tokenFileName)
         self._vid = None
+        
+        self._appVersion = None
         self._groups = None
         self._devices = None
         self._deviceIndexer = {}
         self._raw = raw
+
+        self._setAppVersion(appVersion)
 
         if verifySsl == False:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -108,12 +112,29 @@ class Session(object):
     def _headers(self):
         return {
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.10.0",
+            "X-APP-VERSION": self._appVersion,
             "X-User-Authorization": self._vid,
             "User-Agent": "G-RAC",
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
+
+    def _setAppVersion(self, version):
+        self._appVersion = constants.DEFAULT_X_APP_VERSION
+        if version.lower() != 'auto':
+            self._appVersion = version
+            return
+        if self._raw: print("--- auto detecting latest app version")
+        try:            
+            data = requests.get("https://itunes.apple.com/lookup?id=1348640525").json()
+            version = data['results'][0]['version']
+            if version is not None:
+                if self._raw: print("--- found version: {}".format(version))
+                self._appVersion = version
+                return
+        except:
+            pass
+        if self._raw: print("--- failed to detect app version using default version: {}".format(constants.DEFAULT_X_APP_VERSION))
 
     def _create_token(self):
         response = None
