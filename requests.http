@@ -4,7 +4,8 @@
 # @name login
 POST https://accsmart.panasonic.com/auth/login HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 1.10.0
+X-APP-VERSION: 1.20.0
+User-Agent: G-RAC
 Accept: application/json
 Content-Type: application/json
 
@@ -91,7 +92,7 @@ Content-Type: application/json
 # @name device
 GET https://accsmart.panasonic.com/device/group HTTP/1.1
 X-APP-TYPE: 1
-X-APP-VERSION: 1.10.0
+X-APP-VERSION: 1.20.0
 X-User-Authorization: {{login.response.body.$.uToken}}
 User-Agent: G-RAC
 Accept: application/json

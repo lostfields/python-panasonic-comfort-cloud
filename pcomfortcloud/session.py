@@ -108,7 +108,7 @@ class Session(object):
     def _headers(self):
         return {
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.10.0",
+            "X-APP-VERSION": "1.20.0",
             "X-User-Authorization": self._vid,
             "User-Agent": "G-RAC",
             "Accept": "application/json",
