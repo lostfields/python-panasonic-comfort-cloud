@@ -8,8 +8,10 @@ import os
 import urllib3
 import hashlib
 
+
 from . import urls
 from . import constants
+from .settings import PanasonicSettings
 
 def _validate_response(response):
     """ Verify that response is OK """
@@ -52,11 +54,13 @@ class Session(object):
 
     """
 
-    def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True):
+    def __init__(self, username, password, settingsFileName='~/.panasonic-settings', raw=False, verifySsl=True):
         self._username = username
         self._password = password
-        self._tokenFileName = os.path.expanduser(tokenFileName)
+        self._settings = PanasonicSettings(os.path.expanduser(settingsFileName))
         self._vid = None
+        
+        self._appVersion = self._settings._version
         self._groups = None
         self._devices = None
         self._deviceIndexer = {}
@@ -69,6 +73,9 @@ class Session(object):
             self._verifySsl = os.path.join(os.path.dirname(__file__),
                     "certificatechain.pem")
 
+        if self._settings.version_expired:
+            self._updateAppVersion()
+
     def __enter__(self):
         self.login()
         return self
@@ -79,10 +86,8 @@ class Session(object):
     def login(self):
         """ Login to verisure app api """
 
-        if os.path.exists(self._tokenFileName):
-            with open(self._tokenFileName, 'r') as cookieFile:
-                self._vid = cookieFile.read().strip()
-
+        if self._settings.token is not None:
+            self._vid = self._settings.token
             if self._raw: print("--- token found")
 
             try:
@@ -93,12 +98,11 @@ class Session(object):
 
                 self._vid = None
                 self._devices = None
-                os.remove(self._tokenFileName)
+                self._settings.token = None
 
         if self._vid is None:
             self._create_token()
-            with open(self._tokenFileName, 'w') as tokenFile:
-                tokenFile.write(self._vid)
+            self._settings.token = self._vid
 
             self._get_groups()
 
@@ -108,12 +112,27 @@ class Session(object):
     def _headers(self):
         return {
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.0",
+            "X-APP-VERSION": self._appVersion,
             "X-User-Authorization": self._vid,
             "User-Agent": "G-RAC",
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
+
+    def _updateAppVersion(self):
+                
+        if self._raw: print("--- auto detecting latest app version")
+        try:            
+            data = requests.get("https://itunes.apple.com/lookup?id=1348640525").json()
+            version = data['results'][0]['version']
+            if version is not None:
+                if self._raw: print("--- found version: {}".format(version))
+                self._appVersion = version
+                self._settings.version = version
+                return
+        except:
+            pass
+        if self._raw: print("--- failed to detect app version using version: {}".format(self._appVersion))
 
     def _create_token(self):
         response = None
