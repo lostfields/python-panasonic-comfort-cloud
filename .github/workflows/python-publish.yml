@@ -18,17 +18,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - id: setup
+      name: setup
+      run: 
+        echo "::set-output name=version::$( echo $GITHUB_REF_NAME | sed 's/v\?\(.*\)/\1/g' )"
+    
     - uses: actions/checkout@master
+
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
+
     - name: Install pypa/build
       run: >-
         python -m
         pip install
         build
         --user
+
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m
@@ -37,6 +45,16 @@ jobs:
         --wheel
         --outdir dist/
         .
+      env:
+        VERSION: ${{ steps.setup.outputs.version }}
+
+    - name: upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifact
+        path: dist
+        retention-days: 7
+    
     - name: Publish distribution to PyPI
       uses: pypa/gh-action-pypi-publish@master
       with:
