@@ -1,13 +1,14 @@
 """ Setup for python-panasonic-comfort-cloud """
 
 from setuptools import setup
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name='pcomfortcloud',
-    version='0.0.22',
+    version=os.getenv('VERSION', default='0.0.1'),
     description='Read and change status of Panasonic Comfort Cloud devices',
     long_description=long_description,
     long_description_content_type="text/markdown",
