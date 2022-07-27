@@ -108,11 +108,11 @@ class Session(object):
     def _headers(self):
         return {
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.0",
+            "X-APP-VERSION": "1.19.0",
             "X-User-Authorization": self._vid,
             "User-Agent": "G-RAC",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+            "Accept": "application/json; charset=utf-8",
+            "Content-Type": "application/json; charset=utf-8"
         }
 
     def _create_token(self):
