@@ -69,6 +69,10 @@ def main():
         help="Get a list of all devices")
 
     get_parser = commandparser.add_parser(
+        'getall',
+        help="Get status of all devices")
+
+    get_parser = commandparser.add_parser(
         'get',
         help="Get status of a device")
 
@@ -209,6 +213,17 @@ def main():
 
                 print("device #{}".format(idx + 1))
                 print_result(device, 4)
+
+        if args.command == 'getall':
+            print("status of all devices")
+            for idx, device in enumerate(session.get_devices()):
+                if(idx > 0):
+                    print('')
+
+                print("device #{}".format(idx + 1))
+                device = session.get_devices()[idx - 1]
+                print("reading from device '{}' ({})".format(device['name'], device['id']))
+                print_result( session.get_device(device['id']) )
 
         if args.command == 'get':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
