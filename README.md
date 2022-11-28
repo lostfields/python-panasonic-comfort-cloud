@@ -4,15 +4,16 @@ A python module for reading and changing status of panasonic climate devices thr
 ## Command line usage
 
 ```
-usage: pcomfortcloud.py [-h] [-t TOKEN] username password {list,get,set} ...
+usage: pcomfortcloud.py [-h] [-t TOKEN] username password {list,getall,get,set} ...
 
 Read or change status of Panasonic Climate devices
 
 positional arguments:
   username              Username for Panasonic Comfort Cloud
   password              Password for Panasonic Comfort Cloud
-  {list,get,set,dump}   commands
+  {list,getall,get,set,dump}   commands
     list                Get a list of all devices
+    getall              Get status of all devices
     get                 Get status of a device
     set                 Set status of a device
     dump                Dump raw data of a device
