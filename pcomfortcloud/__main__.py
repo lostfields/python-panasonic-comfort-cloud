@@ -38,11 +38,11 @@ def main():
 
     parser.add_argument(
         'username',
-        help='Username for pcomfortcloud Comfort Cloud. If "authfile" is used then the password parameter is a YAML file containing both the username and password')
+        help='Username for pcomfortcloud Comfort Cloud. If "#" is used then the password parameter is a YAML file containing both the username and password')
 
     parser.add_argument(
         'password',
-        help='Password for pcomfortcloud Comfort Cloud. If "authfile" used as the username, then this parameter is a YAML file containing both the username and password')
+        help='Password for pcomfortcloud Comfort Cloud. If "#" used as the username, then this parameter is a YAML file containing both the username and password')
 
     parser.add_argument(
         '-t', '--token',
@@ -204,7 +204,7 @@ def main():
     args = parser.parse_args()
     
     # if username has been specified as the string "auth" then password is actually a filename containing both the username and password
-    if args.username == "authfile":
+    if args.username == "#":
         # args.password should actually be a filename, try and read it as as yaml file
         with open(args.password, "r") as file:
             try:
