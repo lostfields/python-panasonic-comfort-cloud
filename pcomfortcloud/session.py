@@ -110,6 +110,9 @@ class Session(object):
             "X-APP-TYPE": "1",
             "X-APP-VERSION": "1.19.0",
             "X-User-Authorization": self._vid,
+            "X-APP-TIMESTAMP": "1",
+            "X-APP-NAME": "Comfort Cloud",
+            "X-CFC-API-KEY": "Comfort Cloud",
             "User-Agent": "G-RAC",
             "Accept": "application/json; charset=utf-8",
             "Content-Type": "application/json; charset=utf-8"
