@@ -22,6 +22,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -t TOKEN, --token TOKEN
                         File to store token in
+  -a AUTHFILE, --authfile AUTHFILE
+                        File to store credentials in (instead of using username and password)
   -s [BOOL], --skipVerify [BOOL]
                         Skip Ssl verification
   -r [BOOL], --raw [BOOL]
@@ -119,3 +121,13 @@ can be found at https://pypi.org/project/pcomfortcloud/
 ### How to publish package;
 - `python .\setup.py sdist bdist_wheel`
 - `python -m twine upload dist/*`
+
+## Auth File
+Instead of specifying the username and password on the command line, they can optionally, be stored in a YAML file.
+To use the auth file, on the command line, set the username to authfile and set the password to the full path of the YAML file 
+
+The format of the auth file is:
+```
+username: USERNAME
+password: PASSWORD
+```
