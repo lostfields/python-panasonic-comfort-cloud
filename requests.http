@@ -7,6 +7,9 @@ POST https://accsmart.panasonic.com/auth/login HTTP/1.1
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
 User-Agent: G-RAC
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
 
@@ -22,6 +25,9 @@ GET https://accsmart.panasonic.com/device/group HTTP/1.1
 X-User-Authorization: {{login.response.body.$.uToken}}
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
@@ -32,6 +38,9 @@ GET https://accsmart.panasonic.com/deviceStatus/now/{{device.response.body.$.gro
 X-User-Authorization: {{login.response.body.$.uToken}}
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
@@ -42,6 +51,9 @@ GET https://accsmart.panasonic.com/deviceStatus/{{device.response.body.$.groupLi
 X-User-Authorization: {{login.response.body.$.uToken}}
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
@@ -53,6 +65,9 @@ POST https://accsmart.panasonic.com/deviceHistoryData HTTP/1.1
 X-User-Authorization: {{login.response.body.$.uToken}}
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
@@ -67,6 +82,9 @@ POST https://accsmart.panasonic.com/deviceStatus/control HTTP/1.1
 X-User-Authorization: {{login.response.body.$.uToken}}
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
@@ -90,6 +108,9 @@ POST https://accsmart.panasonic.com/deviceStatus/control HTTP/1.1
 X-User-Authorization: {{login.response.body.$.uToken}}
 X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Accept: application/json
 Content-Type: application/json
