@@ -4,15 +4,16 @@ A python module for reading and changing status of panasonic climate devices thr
 ## Command line usage
 
 ```
-usage: pcomfortcloud.py [-h] [-t TOKEN] username password {list,get,set} ...
+usage: pcomfortcloud.py [-h] [-t TOKEN] username password {list,getall,get,set} ...
 
 Read or change status of Panasonic Climate devices
 
 positional arguments:
   username              Username for Panasonic Comfort Cloud
   password              Password for Panasonic Comfort Cloud
-  {list,get,set,dump}   commands
+  {list,getall,get,set,dump}   commands
     list                Get a list of all devices
+    getall              Get status of all devices
     get                 Get status of a device
     set                 Set status of a device
     dump                Dump raw data of a device
@@ -22,6 +23,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -t TOKEN, --token TOKEN
                         File to store token in
+  -a AUTHFILE, --authfile AUTHFILE
+                        File to store credentials in (instead of using username and password)
   -s [BOOL], --skipVerify [BOOL]
                         Skip Ssl verification
   -r [BOOL], --raw [BOOL]
@@ -119,3 +122,13 @@ can be found at https://pypi.org/project/pcomfortcloud/
 ### How to publish package;
 - `python .\setup.py sdist bdist_wheel`
 - `python -m twine upload dist/*`
+
+## Auth File
+Instead of specifying the username and password on the command line, they can optionally, be stored in a YAML file.
+To use the auth file, on the command line, set the username to authfile and set the password to the full path of the YAML file 
+
+The format of the auth file is:
+```
+username: USERNAME
+password: PASSWORD
+```
