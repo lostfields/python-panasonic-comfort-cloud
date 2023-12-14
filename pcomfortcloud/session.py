@@ -122,7 +122,7 @@ class Session(object):
         response = None
 
         payload = {
-            "language": "0",
+            "language": 0,
             "loginId": self._username,
             "password": self._password
         }
