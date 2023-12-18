@@ -1,5 +1,6 @@
 import argparse
 import json
+import yaml
 import pcomfortcloud
 
 from enum import Enum
@@ -37,11 +38,11 @@ def main():
 
     parser.add_argument(
         'username',
-        help='Username for pcomfortcloud Comfort Cloud')
+        help='Username for pcomfortcloud Comfort Cloud. If "#" is used then the password parameter is a YAML file containing both the username and password')
 
     parser.add_argument(
         'password',
-        help='Password for pcomfortcloud Comfort Cloud')
+        help='Password for pcomfortcloud Comfort Cloud. If "#" used as the username, then this parameter is a YAML file containing both the username and password')
 
     parser.add_argument(
         '-t', '--token',
@@ -197,6 +198,27 @@ def main():
         help='date of day like 20190807')
 
     args = parser.parse_args()
+    
+    # if username has been specified as the string "auth" then password is actually a filename containing both the username and password
+    if args.username == "#":
+        # args.password should actually be a filename, try and read it as as yaml file
+        with open(args.password, "r") as file:
+            try:
+                cfg = yaml.load(file, Loader=yaml.FullLoader)
+                # grab the user and pass out of the auth file
+                # replacing that which was specified on the command line
+                args.username=cfg["username"]
+                args.password=cfg["password"]
+                print ("Retrieved username and password from authfile")
+            except yaml.YAMLError as e:
+                print("YAML format error with authfile: " + args.authfile)
+                print(e)
+                quit()
+            except Exception as e:
+                print("YAML configuration error with authfile (missing fields?): " + args.authfile)
+                print(e)
+                quit()
+        
 
     session = pcomfortcloud.Session(args.username, args.password, args.token, args.raw, args.skipVerify == False)
     session.login()
@@ -215,6 +237,7 @@ def main():
                 raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
+
             print("reading from device '{}' ({})".format(device['name'], device['id']))
 
             print_result( session.get_device(device['id']) )
