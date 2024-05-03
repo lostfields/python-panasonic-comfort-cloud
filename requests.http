@@ -1,4 +1,4 @@
-@APP-VERSION = 1.19.0
+@APP-VERSION = 1.20.1
 
 ###
 
@@ -14,9 +14,9 @@ Accept: application/json; charset=utf-8
 Content-Type: application/json; charset=utf-8
 
 {
-    "language": "0",
-    "loginId": "***",
-    "password": "***"
+    "language": 0,
+    "loginId": "{{$dotenv USERNAME}}",
+    "password": "{{$dotenv PASSWORD}}"
 }
 
 ### 
@@ -129,6 +129,9 @@ X-APP-TYPE: 1
 X-APP-VERSION: {{APP-VERSION}}
 Accept: application/json; charset=utf-8
 Content-Type: application/json
+X-APP-TIMESTAMP: 1
+X-APP-NAME: Comfort Cloud
+X-CFC-API-KEY: Comfort Cloud
 User-Agent: G-RAC
 Host: accsmart.panasonic.com
 Connection: Keep-Alive
