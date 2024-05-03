@@ -108,7 +108,7 @@ class Session(object):
     def _headers(self):
         return {
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.19.0",
+            "X-APP-VERSION": "1.20.1",
             "X-User-Authorization": self._vid,
             "X-APP-TIMESTAMP": "1",
             "X-APP-NAME": "Comfort Cloud",
