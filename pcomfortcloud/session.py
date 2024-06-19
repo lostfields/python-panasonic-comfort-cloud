@@ -43,6 +43,7 @@ class LoginError(Error):
 
 class ResponseError(Error):
     ''' Unexcpected response '''
+
     def __init__(self, status_code, text):
         super(ResponseError, self).__init__(
             'Invalid response'
@@ -253,7 +254,8 @@ class Session(object):
             #         print("--- token probably expired")
             #     self._token = get_and_save_new_token(self._username, self._password, self._tokenFileName)
         else:
-            self._token = get_and_save_new_token(self._username, self._password, self._tokenFileName)
+            self._token = get_and_save_new_token(
+                self._username, self._password, self._tokenFileName)
 
     # def __enter__(self):
     #     self.login()
@@ -290,7 +292,7 @@ class Session(object):
                 "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
             },
             json={
-                "language": "0"
+                "language": 0
             })
 
         print(response.status_code)
@@ -320,7 +322,6 @@ class Session(object):
         # print(response.text)
         # print(response.content)
 
-
         sys.exit(1)
 
     def logout(self):
@@ -347,7 +348,7 @@ class Session(object):
         response = None
 
         try:
-            response = requests.get(urls.get_groups(),headers=self._headers())
+            response = requests.get(urls.get_groups(), headers=self._headers())
 
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
@@ -385,7 +386,8 @@ class Session(object):
                         if 'deviceHashGuid' in device:
                             id = device['deviceHashGuid']
                         else:
-                            id = hashlib.md5(device['deviceGuid'].encode('utf-8')).hexdigest()
+                            id = hashlib.md5(
+                                device['deviceGuid'].encode('utf-8')).hexdigest()
 
                         self._deviceIndexer[id] = device['deviceGuid']
                         self._devices.append({
@@ -400,11 +402,12 @@ class Session(object):
     def dump(self, id):
         deviceGuid = self._deviceIndexer.get(id)
 
-        if(deviceGuid):
+        if (deviceGuid):
             response = None
 
             try:
-                response = requests.get(urls.status(deviceGuid), headers=self._headers())
+                response = requests.get(urls.status(
+                    deviceGuid), headers=self._headers())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -420,7 +423,7 @@ class Session(object):
     def history(self, id, mode, date, tz="+01:00"):
         deviceGuid = self._deviceIndexer.get(id)
 
-        if(deviceGuid):
+        if (deviceGuid):
             response = None
 
             try:
@@ -436,7 +439,8 @@ class Session(object):
             }
 
             try:
-                response = requests.post(urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
+                response = requests.post(
+                    urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -446,7 +450,7 @@ class Session(object):
 
             _validate_response(response)
 
-            if(self._raw is True):
+            if (self._raw is True):
                 print("--- history()")
                 print("--- raw beginning ---")
                 print(response.text)
@@ -463,11 +467,12 @@ class Session(object):
     def get_device(self, id):
         deviceGuid = self._deviceIndexer.get(id)
 
-        if(deviceGuid):
+        if (deviceGuid):
             response = None
 
             try:
-                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
+                response = requests.get(urls.status(
+                    deviceGuid), headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -477,12 +482,11 @@ class Session(object):
 
             _validate_response(response)
 
-            if(self._raw is True):
+            if (self._raw is True):
                 print("--- get_device()")
                 print("--- raw beginning ---")
                 print(response.text)
                 print("--- raw ending    ---")
-
 
             _json = json.loads(response.text)
             return {
@@ -523,13 +527,12 @@ class Session(object):
 
                 if key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
                     airY = value
-                
+
                 if key == 'eco' and isinstance(value, constants.EcoMode):
                     parameters['ecoMode'] = value.value
 
                 if key == 'nanoe' and isinstance(value, constants.NanoeMode) and value != constants.NanoeMode.Unavailable:
                     parameters['nanoe'] = value.value
-
 
         # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
         if airX is not None or airY is not None:
@@ -567,7 +570,7 @@ class Session(object):
                 parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled.value
 
         deviceGuid = self._deviceIndexer.get(id)
-        if(deviceGuid):
+        if (deviceGuid):
             response = None
 
             payload = {
@@ -575,14 +578,15 @@ class Session(object):
                 "parameters": parameters
             }
 
-            if(self._raw is True):
+            if (self._raw is True):
                 print("--- set_device()")
                 print("--- raw out beginning ---")
                 print(payload)
                 print("--- raw out ending    ---")
 
             try:
-                response = requests.post(urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
+                response = requests.post(
+                    urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -592,7 +596,7 @@ class Session(object):
 
             _validate_response(response)
 
-            if(self._raw is True):
+            if (self._raw is True):
                 print("--- raw in beginning ---")
                 print(response.text)
                 print("--- raw in ending    ---\n")
@@ -603,18 +607,18 @@ class Session(object):
 
         return False
 
-    def _read_parameters(self, parameters = {}):
+    def _read_parameters(self, parameters={}):
         value = {}
 
         _convert = {
-                'insideTemperature': 'temperatureInside',
-                'outTemperature': 'temperatureOutside',
-                'temperatureSet': 'temperature',
-                'currencyUnit': 'currencyUnit',
-                'energyConsumption': 'energyConsumption',
-                'estimatedCost': 'estimatedCost',
-                'historyDataList': 'historyDataList',
-            }
+            'insideTemperature': 'temperatureInside',
+            'outTemperature': 'temperatureOutside',
+            'temperatureSet': 'temperature',
+            'currencyUnit': 'currencyUnit',
+            'energyConsumption': 'energyConsumption',
+            'estimatedCost': 'estimatedCost',
+            'historyDataList': 'historyDataList',
+        }
         for key in _convert:
             if key in parameters:
                 value[_convert[key]] = parameters[key]
@@ -623,16 +627,19 @@ class Session(object):
             value['power'] = constants.Power(parameters['operate'])
 
         if 'operationMode' in parameters:
-            value['mode'] = constants.OperationMode(parameters['operationMode'])
+            value['mode'] = constants.OperationMode(
+                parameters['operationMode'])
 
         if 'fanSpeed' in parameters:
             value['fanSpeed'] = constants.FanSpeed(parameters['fanSpeed'])
 
         if 'airSwingLR' in parameters:
-            value['airSwingHorizontal'] = constants.AirSwingLR(parameters['airSwingLR'])
+            value['airSwingHorizontal'] = constants.AirSwingLR(
+                parameters['airSwingLR'])
 
         if 'airSwingUD' in parameters:
-            value['airSwingVertical'] = constants.AirSwingUD(parameters['airSwingUD'])
+            value['airSwingVertical'] = constants.AirSwingUD(
+                parameters['airSwingUD'])
 
         if 'ecoMode' in parameters:
             value['eco'] = constants.EcoMode(parameters['ecoMode'])
