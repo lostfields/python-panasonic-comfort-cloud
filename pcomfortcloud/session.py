@@ -99,28 +99,30 @@ class Session(object):
 
     def login(self):
         """ Login to verisure app api """
-        print("Starting login")
         if self._token is not None:
-            print("here 1")
             if self._raw:
                 print("--- token found")
 
             try:
-                print("here 2")
+                # auth.login(self)
                 auth.get_user_info(self)
                 self._get_groups()
 
             except ResponseError:
-                print("here 3")
                 if self._raw:
                     print("--- token probably expired")
 
-                auth.refresh_token(self)
                 self._devices = None
                 # self._token = None
 
-        if self._token is None:
-            print("here 4")
+        # if self._groups is None:
+        #     try:
+        #         self._token = auth.refresh_token(self)
+        #
+        #     except ResponseError:
+        #         if self._raw:
+        #             print("--- Error refreshing Token")
+        #             os.remove(self._tokenFileName)
 
     def logout(self):
         """ Logout """
@@ -152,7 +154,7 @@ class Session(object):
                 headers=self._headers(),
                 allow_redirects=False)
 
-            print(response.status_code)
+            print(self._headers())
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
 

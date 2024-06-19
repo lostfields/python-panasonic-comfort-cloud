@@ -176,7 +176,9 @@ def get_new_token(username, password):
 
 
 def get_user_info(self):
-    print("Getting User Info")
+    if self._raw:
+        print("--- Getting User Info")
+
     response = None
 
     try:
@@ -195,7 +197,9 @@ def get_user_info(self):
 
 
 def refresh_token(self):
-    print("Refreshing Token")
+    if self._raw:
+        print("--- Refreshing Token")
+
     headers = {
         "Auth0-Client": auth_0_client,
         "user-agent": "okhttp/4.10.0",
@@ -207,16 +211,22 @@ def refresh_token(self):
         "refresh_token": self._token["refresh_token"],
     }
 
-    response = requests.post(
-        'https://authglb.digital.panasonic.com/oauth/token',
-        headers=headers,
-        json=data,
-        allow_redirects=False
-    )
-    print(response.status_code)
-    print(response.headers)
-    print(response.text)
-    print(response.content)
+    try:
+        response = requests.post(
+            'https://authglb.digital.panasonic.com/oauth/token',
+            headers=headers,
+            json=data,
+            allow_redirects=False
+        )
+
+        if 2 != response.status_code // 100:
+            raise session.ResponseError(response.status_code, response.text)
+
+    except requests.exceptions.RequestException as ex:
+        raise session.RequestError(ex)
+
+    token = json.loads(response.text)
+    return token
 
 
 def login(self):
