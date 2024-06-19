@@ -104,7 +104,6 @@ class Session(object):
                 print("--- token found")
 
             try:
-                # auth.login(self)
                 self._get_groups()
 
             except ResponseError:
@@ -112,7 +111,6 @@ class Session(object):
                     print("--- Get Groups Error")
 
                 self._devices = None
-                # self._token = None
 
         if self._groups is None:
             try:
@@ -155,7 +153,6 @@ class Session(object):
         """ Get information about groups """
         response = None
 
-        print("Getting Groups")
         try:
             response = requests.get(
                 urls.get_groups(),
