@@ -2,19 +2,13 @@
 Panasonic session, using Panasonic Comfort Cloud app api
 '''
 
-
 from datetime import datetime
 import json
-import sys
 import requests
 import os
-import urllib
 import hashlib
-import random
-import string
-import base64
-from bs4 import BeautifulSoup
 
+from . import auth
 from . import urls
 from . import constants
 
@@ -60,181 +54,19 @@ def load_token_from_file(token_file_name):
         return token
 
 
-def generate_random_string(length):
-    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
-
-
-def generate_random_string_hex(length):
-    return ''.join(random.choice(string.hexdigits) for _ in range(length))
-
-
-auth_0_client = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
-app_client_id = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
-redirect = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
-
-
-def get_new_token(username, password):
-    requests_session = requests.Session()
-
-    # generate state and code_challenge
-    state = generate_random_string(20)
-
-    code_verifier = generate_random_string(43)
-    code_challenge = base64.urlsafe_b64encode(
-        hashlib.sha256(
-            code_verifier.encode('utf-8')
-        ).digest()).split('='.encode('utf-8'))[0].decode('utf-8')
-
-    print("AUTHORIZE")
-    # ------------------------------------------------------------------------------------------------------------------
-    headers = {
-        "user-agent": "okhttp/4.10.0",
-    }
-
-    params = {
-        "scope": "openid offline_access comfortcloud.control a2w.control",
-        "audience": f"https://digital.panasonic.com/{app_client_id}/api/v1/",
-        "protocol": "oauth2",
-        "response_type": "code",
-        "code_challenge": code_challenge,
-        "code_challenge_method": "S256",
-        "auth0Client": auth_0_client,
-        "client_id": app_client_id,
-        "redirect_uri": redirect,
-        "state": state,
-    }
-
-    response = requests_session.get(
-        'https://authglb.digital.panasonic.com/authorize',
-        headers=headers,
-        params=params,
-        allow_redirects=False)
-
-    # get the "state" querystring parameter from the redirect url
-    location = response.headers['Location']
-    parsed_url = urllib.parse.urlparse(location)
-    params = urllib.parse.parse_qs(parsed_url.query)
-    state_value = params.get('state', [None])[0]
-    print('state: ' + state_value)
-
-    print("FOLLOW REDIRECT")
-    # ------------------------------------------------------------------------------------------------------------------
-    headers = {
-        "user-agent": "okhttp/4.10.0",
-    }
-
-    response = requests_session.get(
-        f"https://authglb.digital.panasonic.com{location}",
-        allow_redirects=False)
-
-    # get the "_csrf" cookie
-    csrf = response.cookies['_csrf']
-    print('_csrf: ' + csrf)
-
-    print("LOGIN")
-    # ------------------------------------------------------------------------------------------------------------------
-    headers = {
-        "Auth0-Client": auth_0_client,
-        "user-agent": "okhttp/4.10.0",
-    }
-
-    data = {
-        "client_id": app_client_id,
-        "redirect_uri": redirect,
-        "tenant": "pdpauthglb-a1",
-        "response_type": "code",
-        "scope": "openid offline_access comfortcloud.control a2w.control",
-        "audience": f"https://digital.panasonic.com/{app_client_id}/api/v1/",
-        "_csrf": csrf,
-        "state": state_value,
-        "_intstate": "deprecated",
-        "username": username,
-        "password": password,
-        "lang": "en",
-        "connection": "PanasonicID-Authentication"
-    }
-
-    response = requests_session.post(
-        'https://authglb.digital.panasonic.com/usernamepassword/login',
-        headers=headers,
-        json=data,
-        allow_redirects=False)
-
-    # get wa, wresult, wctx from body
-    soup = BeautifulSoup(response.content, "html.parser")
-    input_lines = soup.find_all("input", {"type": "hidden"})
-    parameters = dict()
-    for input_line in input_lines:
-        parameters[input_line.get("name")] = input_line.get("value")
-
-    auth_0_request_id = response.headers['X-Auth0-RequestId']
-    print("Auth0-RequestId: " + auth_0_request_id)
-
-    print("CALLBACK")
-    # ------------------------------------------------------------------------------------------------------------------
-    user_agent = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 "
-    user_agent += "(KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
-
-    response = requests_session.post(
-        url="https://authglb.digital.panasonic.com/login/callback",
-        data=parameters,
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": user_agent,
-        },
-        allow_redirects=False)
-
-    print("FOLLOW REDIRECT")
-    # ------------------------------------------------------------------------------------------------------------------
-    headers = {
-        "user-agent": "okhttp/4.10.0",
-    }
-
-    location = response.headers['Location']
-    response = requests_session.get(
-        f"https://authglb.digital.panasonic.com{location}",
-        allow_redirects=False)
-
-    location = response.headers['Location']
-    parsed_url = urllib.parse.urlparse(location)
-    params = urllib.parse.parse_qs(parsed_url.query)
-    code = params.get('code', [None])[0]
-    print('code: ' + code)
-
-    print("GET TOKEN")
-    # ------------------------------------------------------------------------------------------------------------------
-    headers = {
-        "Auth0-Client": auth_0_client,
-        "user-agent": "okhttp/4.10.0",
-    }
-
-    data = {
-        "scope": "openid",
-        "client_id": app_client_id,
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": redirect,
-        "code_verifier": code_verifier
-    }
-
-    response = requests_session.post(
-        'https://authglb.digital.panasonic.com/oauth/token',
-        headers=headers,
-        json=data,
-        allow_redirects=False)
-    token = json.loads(response.text)
-    return token
-
-
 def get_and_save_new_token(username, password, token_file_name):
-    token = get_new_token(username, password)
+    token = auth.get_new_token(username, password)
     with open(token_file_name, 'w') as tokenFile:
         tokenFile.write(json.dumps(token, indent=4))
     return token
 
 
 class Session(object):
-    def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False):
+    def __init__(self,
+                 username,
+                 password,
+                 tokenFileName='~/.panasonic-token',
+                 raw=False):
         self._username = username
         self._password = password
         self._tokenFileName = os.path.expanduser(tokenFileName)
@@ -252,77 +84,43 @@ class Session(object):
             # except ResponseError:
             #     if self._raw:
             #         print("--- token probably expired")
-            #     self._token = get_and_save_new_token(self._username, self._password, self._tokenFileName)
+            #     self._token = get_and_save_new_token(
+            #         self._username, self._password, self._tokenFileName)
         else:
             self._token = get_and_save_new_token(
                 self._username, self._password, self._tokenFileName)
 
-    # def __enter__(self):
-    #     self.login()
-    #     return self
+    def __enter__(self):
+        self.login()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logout()
 
     def login(self):
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        """ Login to verisure app api """
+        print("Starting login")
+        if self._token is not None:
+            print("here 1")
+            if self._raw:
+                print("--- token found")
 
-        response = requests.get(
-            'https://authglb.digital.panasonic.com/userinfo',
-            headers={
-                "Auth0-Client": auth_0_client,
-                "Authorization": "Bearer " + self._token["access_token"]
-            })
-        print(response.status_code)
-        print(response.headers)
-        print(response.text)
-        print(response.content)
+            try:
+                print("here 2")
+                auth.get_user_info(self)
+                self._get_groups()
 
-        response = requests.post(
-            'https://accsmart.panasonic.com/auth/v2/login',
-            headers={
-                "Content-Type": "application/json; charset=utf-8",
-                "User-Agent": "G-RAC",
-                "X-APP-NAME": "Comfort Cloud",
-                "X-APP-TIMESTAMP": timestamp,
-                "X-APP-TYPE": "1",
-                "X-APP-VERSION": "1.20.0",
-                "X-CFC-API-KEY": generate_random_string_hex(128),
-                "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
-            },
-            json={
-                "language": 0
-            })
+            except ResponseError:
+                print("here 3")
+                if self._raw:
+                    print("--- token probably expired")
 
-        print(response.status_code)
-        print(response.headers)
-        print(response.text)
-        print(response.content)
+                auth.refresh_token(self)
+                self._devices = None
+                # self._token = None
 
-        # (ideally) set from body
-        # self._acc_client_id = ...
-
-        # response = requests.get(
-        #     'https://accsmart.panasonic.com/device/group',
-        #     headers={
-        #         "Content-Type": "application/json; charset=utf-8",
-        #         "X-APP-NAME": "Comfort Cloud",
-        #         "User-Agent": "G-RAC",
-        #         "X-APP-TIMESTAMP": timestamp,
-        #         "X-APP-TYPE": "1",
-        #         "X-APP-VERSION": "1.20.0",
-        #         "X-CFC-API-KEY": "0",
-        #         "X-Client-Id": "",
-        #         "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
-        #     },
-        #     allow_redirects=False)
-        # print(response.status_code)
-        # print(response.headers)
-        # print(response.text)
-        # print(response.content)
-
-        sys.exit(1)
+        if self._token is None:
+            print("here 4")
 
     def logout(self):
         """ Logout """
@@ -332,24 +130,29 @@ class Session(object):
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         return {
-            "Content-Type": "application/json; charset=utf-8",
-            "X-APP-NAME": "Comfort Cloud",
-            "User-Agent": "G-RAC",
-            "X-APP-TIMESTAMP": timestamp,
-            "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.1",
-            "X-CFC-API-KEY": "0",
-            "X-Client-Id": self._acc_client_id,
-            "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
+            "content-type": "application/json; charset=utf-8",
+            "x-app-name": "comfort cloud",
+            "user-agent": "g-rac",
+            "x-app-timestamp": timestamp,
+            "x-app-type": "1",
+            "x-app-version": "1.20.0",
+            "x-cfc-api-key": "0",
+            "x-client-id": self._acc_client_id,
+            "x-user-authorization-v2": "bearer " + self._token["access_token"]
         }
 
     def _get_groups(self):
         """ Get information about groups """
         response = None
 
+        print("Getting Groups")
         try:
-            response = requests.get(urls.get_groups(), headers=self._headers())
+            response = requests.get(
+                urls.get_groups(),
+                headers=self._headers(),
+                allow_redirects=False)
 
+            print(response.status_code)
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
 
@@ -385,17 +188,17 @@ class Session(object):
                         id = None
                         if 'deviceHashGuid' in device:
                             id = device['deviceHashGuid']
-                        else:
-                            id = hashlib.md5(
-                                device['deviceGuid'].encode('utf-8')).hexdigest()
+        else:
+            id = hashlib.md5(
+                device['deviceGuid'].encode('utf-8')).hexdigest()
 
-                        self._deviceIndexer[id] = device['deviceGuid']
-                        self._devices.append({
-                            'id': id,
-                            'name': device['deviceName'],
-                            'group': group['groupName'],
-                            'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
-                        })
+            self._deviceIndexer[id] = device['deviceGuid']
+            self._devices.append({
+                'id': id,
+                'name': device['deviceName'],
+                'group': group['groupName'],
+                'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
+            })
 
         return self._devices
 
@@ -440,7 +243,10 @@ class Session(object):
 
             try:
                 response = requests.post(
-                    urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
+                    urls.history(),
+                    json=payload,
+                    headers=self._headers(),
+                    verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -472,7 +278,9 @@ class Session(object):
 
             try:
                 response = requests.get(urls.status(
-                    deviceGuid), headers=self._headers(), verify=self._verifySsl)
+                    deviceGuid),
+                    headers=self._headers(),
+                    verify=self._verifySsl)
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
