@@ -104,6 +104,7 @@ class Session(object):
                 print("--- token found")
 
             try:
+                auth.login(self)
                 self._get_groups()
 
             except ResponseError:
@@ -156,14 +157,7 @@ class Session(object):
         try:
             response = requests.get(
                 urls.get_groups(),
-                headers=self._headers(),
-                # json={"language": 0},
-                allow_redirects=False)
-
-            print(response.status_code)
-            print(response.headers)
-            print(response.text)
-            print(response.content)
+                headers=auth.get_header_for_api_calls(self))
 
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
@@ -200,17 +194,17 @@ class Session(object):
                         id = None
                         if 'deviceHashGuid' in device:
                             id = device['deviceHashGuid']
-        else:
-            id = hashlib.md5(
-                device['deviceGuid'].encode('utf-8')).hexdigest()
+                        else:
+                            id = hashlib.md5(
+                                device['deviceGuid'].encode('utf-8')).hexdigest()
 
-            self._deviceIndexer[id] = device['deviceGuid']
-            self._devices.append({
-                'id': id,
-                'name': device['deviceName'],
-                'group': group['groupName'],
-                'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
-            })
+                        self._deviceIndexer[id] = device['deviceGuid']
+                        self._devices.append({
+                            'id': id,
+                            'name': device['deviceName'],
+                            'group': group['groupName'],
+                            'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
+                        })
 
         return self._devices
 
@@ -257,8 +251,7 @@ class Session(object):
                 response = requests.post(
                     urls.history(),
                     json=payload,
-                    headers=self._headers(),
-                    verify=self._verifySsl)
+                    headers=self._headers())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -291,8 +284,7 @@ class Session(object):
             try:
                 response = requests.get(urls.status(
                     deviceGuid),
-                    headers=self._headers(),
-                    verify=self._verifySsl)
+                    headers=auth.get_header_for_api_calls(self))
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -406,7 +398,7 @@ class Session(object):
 
             try:
                 response = requests.post(
-                    urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
+                    urls.control(), json=payload, headers=self._headers())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)

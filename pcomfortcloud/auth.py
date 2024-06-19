@@ -196,6 +196,23 @@ def get_user_info(self):
         raise session.RequestError(ex)
 
 
+def get_header_for_api_calls(self):
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    return {
+        "Content-Type": "application/json;charset=utf-8",
+        "X-APP-NAME": "Comfort Cloud",
+        "User-Agent": "G-RAC",
+        "X-APP-TIMESTAMP": timestamp,
+        "X-APP-TYPE": "1",
+        "X-APP-VERSION": "1.20.0",
+        # "X-CFC-API-KEY": "0",
+        "X-CFC-API-KEY": generate_random_string_hex(128),
+        "X-Client-Id": self._acc_client_id,
+        "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
+    }
+
+
 def refresh_token(self):
     if self._raw:
         print("--- Refreshing Token")
@@ -230,21 +247,9 @@ def refresh_token(self):
 
 
 def login(self):
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-
     response = requests.post(
         'https://accsmart.panasonic.com/auth/v2/login',
-        headers={
-            "Content-Type": "application/json; charset=utf-8",
-            "User-Agent": "G-RAC",
-            "X-APP-NAME": "Comfort Cloud",
-            "X-APP-TIMESTAMP": timestamp,
-            "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.0",
-            "X-CFC-API-KEY": generate_random_string_hex(128),
-            "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
-        },
+        headers=get_header_for_api_calls(self),
         json={
             "language": 0
         })
