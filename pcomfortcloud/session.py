@@ -8,7 +8,7 @@ import requests
 import os
 import hashlib
 
-from . import auth
+from . import panasonic_auth
 from . import urls
 from . import constants
 
@@ -48,19 +48,6 @@ class ResponseError(Error):
         self.text = text
 
 
-def load_token_from_file(token_file_name):
-    with open(token_file_name, "r") as token_file:
-        token = json.load(token_file)
-        return token
-
-
-def get_and_save_new_token(username, password, token_file_name):
-    token = auth.get_new_token(username, password)
-    with open(token_file_name, 'w') as tokenFile:
-        tokenFile.write(json.dumps(token, indent=4))
-    return token
-
-
 class Session(object):
     def __init__(self,
                  username,
@@ -70,25 +57,16 @@ class Session(object):
         self._username = username
         self._password = password
         self._tokenFileName = os.path.expanduser(tokenFileName)
-        self._token = None
         self._groups = None
         self._devices = None
         self._deviceIndexer = {}
         self._raw = raw
         self._acc_client_id = None
-
-        if os.path.exists(self._tokenFileName):
-            self._token = load_token_from_file(self._tokenFileName)
-            # try:
-            #     self._get_groups()
-            # except ResponseError:
-            #     if self._raw:
-            #         print("--- token probably expired")
-            #     self._token = get_and_save_new_token(
-            #         self._username, self._password, self._tokenFileName)
-        else:
-            self._token = get_and_save_new_token(
-                self._username, self._password, self._tokenFileName)
+        self.auth = panasonic_auth.PanasonicSession(username,
+                                                    password,
+                                                    tokenFileName,
+                                                    raw)
+        self.auth.login()
 
     def __enter__(self):
         self.login()
@@ -99,12 +77,11 @@ class Session(object):
 
     def login(self):
         """ Login to verisure app api """
-        if self._token is not None:
+        if self.auth._token is not None:
             if self._raw:
                 print("--- token found")
 
             try:
-                auth.login(self)
                 self._get_groups()
 
             except ResponseError:
@@ -115,14 +92,14 @@ class Session(object):
 
         if self._groups is None:
             try:
-                auth.get_user_info(self)
+                self.auth.get_user_info()
 
             except ResponseError:
                 if self._raw:
                     print("--- Error Getting User Info")
 
                 try:
-                    self._token = auth.refresh_token(self)
+                    self.auth._token = self.auth.refresh_token(self)
 
                 except ResponseError:
                     if self._raw:
@@ -134,22 +111,6 @@ class Session(object):
         """ Logout """
         os.remove(self._tokenFileName)
 
-    def _headers(self):
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-        return {
-            "Content-Type": "application/json; charset=utf-8",
-            "X-APP-NAME": "Comfort Cloud",
-            "User-Agent": "G-RAC",
-            "X-APP-TIMESTAMP": timestamp,
-            "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.0",
-            # "X-CFC-API-KEY": "0",
-            "X-CFC-API-KEY": auth.generate_random_string_hex(128),
-            "X-Client-Id": self._acc_client_id,
-            "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
-        }
-
     def _get_groups(self):
         """ Get information about groups """
         response = None
@@ -157,8 +118,7 @@ class Session(object):
         try:
             response = requests.get(
                 urls.get_groups(),
-                headers=auth.get_header_for_api_calls(self))
-
+                headers=self.auth.get_header_for_api_calls())
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
 
@@ -177,7 +137,7 @@ class Session(object):
         self._devices = None
 
     def get_devices(self, group=None):
-        if self._token is None:
+        if self.auth._token is None:
             self.login()
 
         if self._devices is None:
@@ -215,8 +175,9 @@ class Session(object):
             response = None
 
             try:
-                response = requests.get(urls.status(
-                    deviceGuid), headers=self._headers())
+                response = requests.get(
+                    urls.status(deviceGuid),
+                    headers=self.auth.get_header_for_api_calls())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -251,7 +212,7 @@ class Session(object):
                 response = requests.post(
                     urls.history(),
                     json=payload,
-                    headers=self._headers())
+                    headers=self.auth.get_header_for_api_calls())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -282,9 +243,9 @@ class Session(object):
             response = None
 
             try:
-                response = requests.get(urls.status(
-                    deviceGuid),
-                    headers=auth.get_header_for_api_calls(self))
+                response = requests.get(
+                    urls.status(deviceGuid),
+                    headers=self.auth.get_header_for_api_calls())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
@@ -398,7 +359,9 @@ class Session(object):
 
             try:
                 response = requests.post(
-                    urls.control(), json=payload, headers=self._headers())
+                    urls.control(),
+                    json=payload,
+                    headers=self.auth.get_header_for_api_calls())
 
                 if 2 != response.status_code // 100:
                     raise ResponseError(response.status_code, response.text)
