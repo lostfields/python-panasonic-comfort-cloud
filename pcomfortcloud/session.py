@@ -63,6 +63,10 @@ def generate_random_string(length):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
+def generate_random_string_hex(length):
+    return ''.join(random.choice(string.hexdigits) for _ in range(length))
+
+
 auth_0_client = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
 app_client_id = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
 redirect = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
@@ -259,34 +263,64 @@ class Session(object):
         self.logout()
 
     def login(self):
-        headers_user_info = self._headers()
-        headers_user_info["Auth0-Client"] = auth_0_client
-
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-        response = requests.post(
-            'https://accsmart.panasonic.com/auth/v2/login',
+
+        response = requests.get(
+            'https://authglb.digital.panasonic.com/userinfo',
             headers={
-                "Content-Type": "application/json; charset=utf-8",
-                "X-APP-NAME": "Comfort Cloud",
-                "User-Agent": "G-RAC",
-                "X-APP-TIMESTAMP": timestamp,
-                "X-APP-TYPE": "1",
-                "X-APP-VERSION": "1.20.0",
-                "X-CFC-API-KEY": "0",
-                "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
-            },
-            json={
-                "language": "0"
-            },
-            allow_redirects=False)
+                "Auth0-Client": auth_0_client,
+                "Authorization": "Bearer " + self._token["access_token"]
+            })
         print(response.status_code)
         print(response.headers)
         print(response.text)
         print(response.content)
 
-        # set from body
+        response = requests.post(
+            'https://accsmart.panasonic.com/auth/v2/login',
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+                "User-Agent": "G-RAC",
+                "X-APP-NAME": "Comfort Cloud",
+                "X-APP-TIMESTAMP": timestamp,
+                "X-APP-TYPE": "1",
+                "X-APP-VERSION": "1.20.0",
+                "X-CFC-API-KEY": generate_random_string_hex(128),
+                "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
+            },
+            json={
+                "language": "0"
+            })
+
+        print(response.status_code)
+        print(response.headers)
+        print(response.text)
+        print(response.content)
+
+        # (ideally) set from body
         # self._acc_client_id = ...
+
+        # response = requests.get(
+        #     'https://accsmart.panasonic.com/device/group',
+        #     headers={
+        #         "Content-Type": "application/json; charset=utf-8",
+        #         "X-APP-NAME": "Comfort Cloud",
+        #         "User-Agent": "G-RAC",
+        #         "X-APP-TIMESTAMP": timestamp,
+        #         "X-APP-TYPE": "1",
+        #         "X-APP-VERSION": "1.20.0",
+        #         "X-CFC-API-KEY": "0",
+        #         "X-Client-Id": "",
+        #         "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
+        #     },
+        #     allow_redirects=False)
+        # print(response.status_code)
+        # print(response.headers)
+        # print(response.text)
+        # print(response.content)
+
+
         sys.exit(1)
 
     def logout(self):
