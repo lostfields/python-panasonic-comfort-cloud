@@ -1,8 +1,10 @@
 from enum import Enum
 
+
 class Power(Enum):
     Off = 0
     On = 1
+
 
 class OperationMode(Enum):
     Auto = 0
@@ -10,6 +12,7 @@ class OperationMode(Enum):
     Cool = 2
     Heat = 3
     Fan = 4
+
 
 class AirSwingUD(Enum):
     Auto = -1
@@ -20,6 +23,7 @@ class AirSwingUD(Enum):
     Down = 1
     Swing = 5
 
+
 class AirSwingLR(Enum):
     Auto = -1
     Left = 1
@@ -28,16 +32,19 @@ class AirSwingLR(Enum):
     RightMid = 4
     Right = 0
 
+
 class EcoMode(Enum):
     Auto = 0
     Powerful = 1
     Quiet = 2
+
 
 class AirSwingAutoMode(Enum):
     Disabled = 1
     Both = 0
     AirSwingLR = 3
     AirSwingUD = 2
+
 
 class FanSpeed(Enum):
     Auto = 0
@@ -47,11 +54,13 @@ class FanSpeed(Enum):
     HighMid = 4
     High = 5
 
+
 class dataMode(Enum):
     Day = 0
     Week = 1
     Month = 2
     Year = 4
+
 
 class NanoeMode(Enum):
     Unavailable = 0
