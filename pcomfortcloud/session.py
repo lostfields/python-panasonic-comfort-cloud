@@ -105,24 +105,31 @@ class Session(object):
 
             try:
                 # auth.login(self)
-                auth.get_user_info(self)
                 self._get_groups()
 
             except ResponseError:
                 if self._raw:
-                    print("--- token probably expired")
+                    print("--- Get Groups Error")
 
                 self._devices = None
                 # self._token = None
 
-        # if self._groups is None:
-        #     try:
-        #         self._token = auth.refresh_token(self)
-        #
-        #     except ResponseError:
-        #         if self._raw:
-        #             print("--- Error refreshing Token")
-        #             os.remove(self._tokenFileName)
+        if self._groups is None:
+            try:
+                auth.get_user_info(self)
+
+            except ResponseError:
+                if self._raw:
+                    print("--- Error Getting User Info")
+
+                try:
+                    self._token = auth.refresh_token(self)
+
+                except ResponseError:
+                    if self._raw:
+                        print("--- Error Refreshing Token")
+
+                    os.remove(self._tokenFileName)
 
     def logout(self):
         """ Logout """
@@ -132,15 +139,16 @@ class Session(object):
         now = datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         return {
-            "content-type": "application/json; charset=utf-8",
-            "x-app-name": "comfort cloud",
-            "user-agent": "g-rac",
-            "x-app-timestamp": timestamp,
-            "x-app-type": "1",
-            "x-app-version": "1.20.0",
-            "x-cfc-api-key": "0",
-            "x-client-id": self._acc_client_id,
-            "x-user-authorization-v2": "bearer " + self._token["access_token"]
+            "Content-Type": "application/json; charset=utf-8",
+            "X-APP-NAME": "Comfort Cloud",
+            "User-Agent": "G-RAC",
+            "X-APP-TIMESTAMP": timestamp,
+            "X-APP-TYPE": "1",
+            "X-APP-VERSION": "1.20.0",
+            # "X-CFC-API-KEY": "0",
+            "X-CFC-API-KEY": auth.generate_random_string_hex(128),
+            "X-Client-Id": self._acc_client_id,
+            "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
         }
 
     def _get_groups(self):
@@ -152,9 +160,14 @@ class Session(object):
             response = requests.get(
                 urls.get_groups(),
                 headers=self._headers(),
+                # json={"language": 0},
                 allow_redirects=False)
 
-            print(self._headers())
+            print(response.status_code)
+            print(response.headers)
+            print(response.text)
+            print(response.content)
+
             if 2 != response.status_code // 100:
                 raise ResponseError(response.status_code, response.text)
 
