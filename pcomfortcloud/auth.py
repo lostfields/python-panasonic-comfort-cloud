@@ -203,9 +203,10 @@ def refresh_token(self):
 
     data = {
         "grant_type": "refresh_token",
-        "client_id": self._acc_client_id,
+        "client_id": app_client_id,
         "refresh_token": self._token["refresh_token"],
     }
+
     response = requests.post(
         'https://authglb.digital.panasonic.com/oauth/token',
         headers=headers,
