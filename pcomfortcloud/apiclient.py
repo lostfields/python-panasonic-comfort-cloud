@@ -51,7 +51,8 @@ class ApiClient(panasonicsession.PanasonicSession):
                         if 'deviceHashGuid' in device:
                             device_id = device['deviceHashGuid']
                         else:
-                            device_id = hashlib.md5(device['deviceGuid'].encode('utf-8')).hexdigest()
+                            device_id = hashlib.md5(
+                                device['deviceGuid'].encode('utf-8')).hexdigest()
 
                         self._device_indexer[device_id] = device['deviceGuid']
                         self._devices.append({
@@ -84,7 +85,8 @@ class ApiClient(panasonicsession.PanasonicSession):
                 "osTimezone": time_zone
             }
 
-            json_response = self.execute_post(self._get_device_history_url(), payload, "history", 200)
+            json_response = self.execute_post(
+                self._get_device_history_url(), payload, "history", 200)
 
             return {
                 'id': device_id,
@@ -96,7 +98,8 @@ class ApiClient(panasonicsession.PanasonicSession):
         device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
-            json_response = self.execute_get(self._get_device_status_url(device_guid), "get_device", 200)
+            json_response = self.execute_get(
+                self._get_device_status_url(device_guid), "get_device", 200)
             return {
                 'id': device_id,
                 'parameters': self._read_parameters(json_response['parameters'])
@@ -144,7 +147,8 @@ class ApiClient(panasonicsession.PanasonicSession):
                         value != constants.NanoeMode.Unavailable:
                     parameters['nanoe'] = value.value
 
-        # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
+        # routine to set the auto mode of fan
+        # (either horizontal, vertical, both or disabled)
         if air_x is not None or air_y is not None:
             fan_auto = 0
             device = self.get_device(device_id)
@@ -185,7 +189,8 @@ class ApiClient(panasonicsession.PanasonicSession):
                 "deviceGuid": device_guid,
                 "parameters": parameters
             }
-            _ = self.execute_post(self._get_device_status_control_url(), payload, "set_device", 200)
+            _ = self.execute_post(
+                self._get_device_status_control_url(), payload, "set_device", 200)
             return True
         return False
 

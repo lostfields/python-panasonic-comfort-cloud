@@ -66,7 +66,8 @@ class PanasonicSession():
             # multiple parts in access_token which are separated by .
             part_of_token_b64 = str(self._token["access_token"].split(".")[1])
             # as seen here: https://stackoverflow.com/questions/3302946/how-to-decode-base64-url-in-python
-            part_of_token = base64.urlsafe_b64decode(part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
+            part_of_token = base64.urlsafe_b64decode(
+                part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
             token_info_json = json.loads(part_of_token)
 
             if self._raw:
@@ -338,7 +339,11 @@ class PanasonicSession():
             })
         check_response(response, 'userinfo', 200)
 
-    def execute_post(self, url, json_data, function_description, expected_status_code):
+    def execute_post(self,
+                     url,
+                     json_data,
+                     function_description,
+                     expected_status_code):
         self._ensure_valid_token()
 
         try:
