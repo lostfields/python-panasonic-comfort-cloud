@@ -16,15 +16,24 @@ setup(
     author='Lostfields',
     license='MIT',
     classifiers=[
-       'Topic :: Home Automation',
+        'Topic :: Home Automation',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
     keywords='home automation panasonic climate',
-    install_requires=['requests>=2.20.0'],
+    install_requires=[
+        'requests>=2.20.0',
+        'beautifulsoup4>=4.12.3',
+        'bs4>=0.0.2',
+        'certifi>=2024.6.2',
+        'charset-normalizer>=3.3.2',
+        'idna>=3.7',
+        'requests>=2.32.3',
+        'soupsieve>=2.5',
+        'urllib3>=2.2.2',
+    ],
     packages=['pcomfortcloud'],
-    package_data={'': ['certificatechain.pem']},
     zip_safe=False,
     entry_points={
         'console_scripts': [

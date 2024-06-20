@@ -95,11 +95,10 @@ optional arguments:
 
 ## Module usage
 
-
 ```python
 import pcomfortcloud
 
-session = pcomfortcloud.Session('user@example.com', 'mypassword')
+session = pcomfortcloud.ComfortCloudSession('user@example.com', 'mypassword')
 session.login()
 
 devices = session.get_devices()
@@ -109,8 +108,8 @@ print(devices)
 print(session.get_device(devices[0]['id']))
 
 session.set_device(devices[0]['id'],
-  power = pcomfortcloud.constants.Power.On,
-  temperature = 22.0)
+                   power=pcomfortcloud.constants.Power.On,
+                   temperature=22.0)
 ```
 
 ## PyPi package

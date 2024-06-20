@@ -1,11 +1,10 @@
 import argparse
-import json
 import pcomfortcloud
 
 from enum import Enum
 
 
-def print_result(obj, indent = 0):
+def print_result(obj, indent=0):
     for key in obj:
         value = obj[key]
 
@@ -13,14 +12,16 @@ def print_result(obj, indent = 0):
             print(" "*indent + key)
             print_result(value, indent + 4)
         elif isinstance(value, Enum):
-            print(" "*indent + "{0: <{width}}: {1}".format(key, value.name, width=25-indent))
+            print(
+                " "*indent + "{0: <{width}}: {1}".format(key, value.name, width=25-indent))
         elif isinstance(value, list):
             print(" "*indent + "{0: <{width}}:".format(key, width=25-indent))
             for elt in value:
                 print_result(elt, indent + 4)
                 print("")
         else:
-            print(" "*indent + "{0: <{width}}: {1}".format(key, value, width=25-indent))
+            print(" "*indent +
+                  "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
 
 def str2bool(v):
@@ -50,12 +51,6 @@ def main():
         '-t', '--token',
         help='File to store token in',
         default='~/.pcomfortcloud-token')
-
-    parser.add_argument(
-        '-s', '--skipVerify',
-        help='Skip Ssl verification if set as True',
-        type=str2bool, nargs='?', const=True,
-        default=False)
 
     parser.add_argument(
         '-r', '--raw',
@@ -201,18 +196,18 @@ def main():
 
     args = parser.parse_args()
 
-    session = pcomfortcloud.Session(
+    session = pcomfortcloud.ComfortCloudSession(
         args.username,
         args.password,
         args.token,
         args.raw)
-    session.login()
+    session.start_session()
 
     try:
         if args.command == 'list':
             print("list of devices and its device id (1-x)")
             for idx, device in enumerate(session.get_devices()):
-                if(idx > 0):
+                if idx > 0:
                     print('')
 
                 print("device #{}".format(idx + 1))
@@ -220,19 +215,23 @@ def main():
 
         if args.command == 'get':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(
+                    1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
-            print("reading from device '{}' ({})".format(device['name'], device['id']))
+            print("reading from device '{}' ({})".format(
+                device['name'], device['id']))
 
-            print_result( session.get_device(device['id']) )
+            print_result(session.get_device(device['id']))
 
         if args.command == 'set':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(
+                    1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
-            print("writing to device '{}' ({})".format(device['name'], device['id']))
+            print("writing to device '{}' ({})".format(
+                device['name'], device['id']))
 
             kwargs = {}
 
@@ -264,7 +263,8 @@ def main():
 
         if args.command == 'dump':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(
+                    1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
 
@@ -272,7 +272,8 @@ def main():
 
         if args.command == 'history':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(
+                    1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
 

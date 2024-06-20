@@ -3,17 +3,11 @@ A python module for reading and changing status of panasonic climate devices thr
 """
 
 __all__ = [
-    'Error',
-    'LoginError',
-    'ResponseError',
-    'Session'
+    'ComfortCloudSession'
 ]
 
-from .session import (
-    Error,
-    LoginError,
-    ResponseError,
-    Session
+from .comfortcloudsession import (
+    ComfortCloudSession
 )
 
 from . import constants
