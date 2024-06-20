@@ -4,13 +4,7 @@ Panasonic session, using Panasonic Comfort Cloud app api
 
 import hashlib
 import re
-
-try:
-    # Python 3
-    from urllib.parse import quote_plus
-except ImportError:
-    # Python 2
-    from urllib import quote_plus
+from urllib.parse import quote_plus
 
 from . import panasonicsession
 from . import constants
@@ -26,7 +20,7 @@ class ApiClient(panasonicsession.PanasonicSession):
 
         self._groups = None
         self._devices = None
-        self._deviceIndexer = {}
+        self._device_indexer = {}
         self._raw = raw
         self._acc_client_id = None
 
@@ -42,7 +36,7 @@ class ApiClient(panasonicsession.PanasonicSession):
         )
         self._devices = None
 
-    def get_devices(self, group=None):
+    def get_devices(self):
         if self._devices is None:
             self._devices = []
 
@@ -59,7 +53,7 @@ class ApiClient(panasonicsession.PanasonicSession):
                         else:
                             device_id = hashlib.md5(device['deviceGuid'].encode('utf-8')).hexdigest()
 
-                        self._deviceIndexer[device_id] = device['deviceGuid']
+                        self._device_indexer[device_id] = device['deviceGuid']
                         self._devices.append({
                             'id': device_id,
                             'name': device['deviceName'],
@@ -69,13 +63,13 @@ class ApiClient(panasonicsession.PanasonicSession):
         return self._devices
 
     def dump(self, device_id):
-        device_guid = self._deviceIndexer.get(device_id)
+        device_guid = self._device_indexer.get(device_id)
         if device_guid:
             return self.execute_get(self._get_device_status_url(device_guid), "dump", 200)
         return None
 
-    def history(self, device_id, mode, date, tz="+01:00"):
-        device_guid = self._deviceIndexer.get(device_id)
+    def history(self, device_id, mode, date, time_zone="+01:00"):
+        device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
             try:
@@ -87,7 +81,7 @@ class ApiClient(panasonicsession.PanasonicSession):
                 "deviceGuid": device_guid,
                 "dataMode": data_mode,
                 "date": date,
-                "osTimezone": tz
+                "osTimezone": time_zone
             }
 
             json_response = self.execute_post(self._get_device_history_url(), payload, "history", 200)
@@ -99,7 +93,7 @@ class ApiClient(panasonicsession.PanasonicSession):
         return None
 
     def get_device(self, device_id):
-        device_guid = self._deviceIndexer.get(device_id)
+        device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
             json_response = self.execute_get(self._get_device_status_url(device_guid), "get_device", 200)
@@ -185,7 +179,7 @@ class ApiClient(panasonicsession.PanasonicSession):
             else:
                 parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled.value
 
-        device_guid = self._deviceIndexer.get(device_id)
+        device_guid = self._device_indexer.get(device_id)
         if device_guid:
             payload = {
                 "deviceGuid": device_guid,
@@ -195,8 +189,8 @@ class ApiClient(panasonicsession.PanasonicSession):
             return True
         return False
 
-    def _read_parameters(self, parameters={}):
-        value = {}
+    def _read_parameters(self, parameters=dict()):
+        value = dict()
 
         _convert = {
             'insideTemperature': 'temperatureInside',

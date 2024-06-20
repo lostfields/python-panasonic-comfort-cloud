@@ -1,7 +1,7 @@
 import argparse
-import pcomfortcloud
-
 from enum import Enum
+
+import pcomfortcloud
 
 
 def print_result(obj, indent=0):
@@ -24,13 +24,12 @@ def print_result(obj, indent=0):
                   "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
 
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+def str2bool(boolean_string_value):
+    if boolean_string_value.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    if boolean_string_value.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+    raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def main():
@@ -280,7 +279,7 @@ def main():
             print_result(session.history(device['id'], args.mode, args.date))
 
     except pcomfortcloud.ResponseError as ex:
-        print(ex.text)
+        print(ex)
 
 
 # pylint: disable=C0103

@@ -1,15 +1,15 @@
 import base64
-from bs4 import BeautifulSoup
 import datetime
 import hashlib
 import json
 import os
 import random
-import requests
 import string
 import time
 import urllib
+import requests
 
+from bs4 import BeautifulSoup
 from . import exceptions
 
 
@@ -36,7 +36,7 @@ def get_querystring_parameter_from_header_entry_url(response, header_entry, quer
     return params.get(querystring_parameter, [None])[0]
 
 
-class PanasonicSession(object):
+class PanasonicSession():
     APP_CLIENT_ID = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
     AUTH_0_CLIENT = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
     REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
@@ -281,9 +281,9 @@ class PanasonicSession(object):
     def stop_session(self):
         response = requests.post(
             f"{PanasonicSession.BASE_PATH_ACC}/auth/v2/logout",
-            headers=self.get_header_for_api_calls()
+            headers=self._get_header_for_api_calls()
         )
-        check_response(response, 200)
+        check_response(response, "logout", 200)
         if json.loads(response.text)["result"] != 0:
             # issue during logout, but do we really care?
             pass
