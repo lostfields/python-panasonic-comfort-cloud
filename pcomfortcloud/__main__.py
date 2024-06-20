@@ -196,7 +196,7 @@ def main():
 
     args = parser.parse_args()
 
-    session = pcomfortcloud.ComfortCloudSession(
+    session = pcomfortcloud.ApiClient(
         args.username,
         args.password,
         args.token,

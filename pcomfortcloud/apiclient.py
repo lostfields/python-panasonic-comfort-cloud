@@ -16,35 +16,7 @@ from . import panasonicsession
 from . import constants
 
 
-class Error(Exception):
-    ''' Panasonic session error '''
-    pass
-
-
-class RequestError(Error):
-    ''' Wrapped requests.exceptions.RequestException '''
-    pass
-
-
-class LoginError(Error):
-    ''' Login failed '''
-    pass
-
-
-class ResponseError(Error):
-    ''' Unexcpected response '''
-
-    def __init__(self, status_code, text):
-        super(ResponseError, self).__init__(
-            'Invalid response'
-            ', status code: {0} - Data: {1}'.format(
-                status_code,
-                text))
-        self.status_code = status_code
-        self.text = text
-
-
-class ComfortCloudSession(panasonicsession.PanasonicSession):
+class ApiClient(panasonicsession.PanasonicSession):
     def __init__(self,
                  username,
                  password,
@@ -98,7 +70,6 @@ class ComfortCloudSession(panasonicsession.PanasonicSession):
 
     def dump(self, device_id):
         device_guid = self._deviceIndexer.get(device_id)
-
         if device_guid:
             return self.execute_get(self._get_device_status_url(device_guid), "dump", 200)
         return None
@@ -143,7 +114,8 @@ class ComfortCloudSession(panasonicsession.PanasonicSession):
 
         Args:
             device_id  (str): Id of the device
-            kwargs   : {temperature=float}, {mode=OperationMode}, {fanSpeed=FanSpeed}, {power=Power}, {airSwingHorizontal=}, {airSwingVertical=}, {eco=EcoMode}
+            kwargs   : {temperature=float}, {mode=OperationMode}, {fanSpeed=FanSpeed}, {power=Power},
+                       {airSwingHorizontal=}, {airSwingVertical=}, {eco=EcoMode}
         """
 
         parameters = {}
@@ -173,7 +145,9 @@ class ComfortCloudSession(panasonicsession.PanasonicSession):
                 if key == 'eco' and isinstance(value, constants.EcoMode):
                     parameters['ecoMode'] = value.value
 
-                if key == 'nanoe' and isinstance(value, constants.NanoeMode) and value != constants.NanoeMode.Unavailable:
+                if key == 'nanoe' and \
+                        isinstance(value, constants.NanoeMode) and \
+                        value != constants.NanoeMode.Unavailable:
                     parameters['nanoe'] = value.value
 
         # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)

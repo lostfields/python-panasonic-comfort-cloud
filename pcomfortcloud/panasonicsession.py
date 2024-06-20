@@ -10,6 +10,8 @@ import string
 import time
 import urllib
 
+from . import exceptions
+
 
 def generate_random_string(length):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
@@ -21,8 +23,9 @@ def generate_random_string_hex(length):
 
 def check_response(response, function_description, expected_status):
     if response.status_code != expected_status:
-        raise Exception(
-            f"({function_description}: Expected status code {expected_status}, received: {response.status_code}."
+        raise exceptions.ResponseError(
+            f"({function_description}: Expected status code {expected_status}, received: {response.status_code}: " +
+            f"{response.text}"
         )
 
 
@@ -75,7 +78,20 @@ class PanasonicSession(object):
     def _check_token_is_valid(self):
         now = datetime.datetime.now()
         now_unix = time.mktime(now.timetuple())
-        if now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]:
+
+        # multiple parts in access_token which are separated by .
+        part_of_token_b64 = str(self._token["access_token"].split(".")[1])
+        # as seen here: https://stackoverflow.com/questions/3302946/how-to-decode-base64-url-in-python
+        part_of_token = base64.urlsafe_b64decode(part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
+        token_info_json = json.loads(part_of_token)
+
+        if self._raw:
+            print(json.dumps(token_info_json, indent=4))
+
+        expiry_in_token = token_info_json["exp"]
+
+        if (now_unix > expiry_in_token) or \
+                (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
             return False
         return True
 
@@ -339,21 +355,30 @@ class PanasonicSession(object):
     def execute_post(self, url, json_data, function_description, expected_status_code):
         self._ensure_valid_token()
 
-        response = requests.post(
-            url,
-            json=json_data,
-            headers=self._get_header_for_api_calls()
-        )
+        try:
+            response = requests.post(
+                url,
+                json=json_data,
+                headers=self._get_header_for_api_calls()
+            )
+        except requests.exceptions.RequestException as ex:
+            raise exceptions.RequestError(ex)
+
         self._print_response_if_raw_is_set(response, function_description)
         check_response(response, function_description, expected_status_code)
         return json.loads(response.text)
 
     def execute_get(self, url, function_description, expected_status_code):
         self._ensure_valid_token()
-        response = requests.get(
-            url,
-            headers=self._get_header_for_api_calls()
-        )
+
+        try:
+            response = requests.get(
+                url,
+                headers=self._get_header_for_api_calls()
+            )
+        except requests.exceptions.RequestException as ex:
+            raise exceptions.RequestError(ex)
+
         self._print_response_if_raw_is_set(response, function_description)
         check_response(response, function_description, expected_status_code)
         return json.loads(response.text)
