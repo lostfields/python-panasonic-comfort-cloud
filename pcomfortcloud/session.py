@@ -105,7 +105,11 @@ class Session(object):
                     if self._raw:
                         print("--- Error Refreshing Token")
 
-                    self.auth.logout()
+                    os.remove(self._tokenFileName)
+
+    def logout(self):
+        """ Logout """
+        os.remove(self._tokenFileName)
 
     def _get_groups(self):
         """ Get information about groups """

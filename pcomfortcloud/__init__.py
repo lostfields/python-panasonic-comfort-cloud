@@ -3,15 +3,17 @@ A python module for reading and changing status of panasonic climate devices thr
 """
 
 __all__ = [
-    'ApiClient',
     'Error',
     'LoginError',
-    'RequestError',
-    'ResponseError'
+    'ResponseError',
+    'Session'
 ]
 
-from .apiclient import (
-    ApiClient
+from .session import (
+    Error,
+    LoginError,
+    ResponseError,
+    Session
 )
 
 from . import constants
