@@ -57,6 +57,29 @@ class PanasonicSession():
         self._password = password
         self._token = token
         self._raw = raw
+        self._app_version = self.X_APP_VERSION
+
+        self._update_app_version()
+
+    def _update_app_version(self):
+
+        if self._raw:
+            print("--- auto detecting latest app version")
+        try:
+            data = re.get(
+                "https://itunes.apple.com/lookup?id=1348640525").json()
+            version = data['results'][0]['version']
+            if version is not None:
+                if self._raw:
+                    print("--- found version: {}".format(version))
+                self._app_version = version
+                return
+        except Exception as e:
+            print(f"Get version: {e}")
+            pass
+        if self._raw:
+            print(
+                "--- failed to detect app version using version: {}".format(self._app_version))
 
     def _check_token_is_valid(self):
         if self._token is not None:
@@ -240,7 +263,7 @@ class PanasonicSession():
                 "X-APP-NAME": "Comfort Cloud",
                 "X-APP-TIMESTAMP": timestamp,
                 "X-APP-TYPE": "1",
-                "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
+                "X-APP-VERSION": self._app_version,
                 "X-CFC-API-KEY": generate_random_string_hex(128),
                 "X-User-Authorization-V2": "Bearer " + token_response["access_token"]
             },
@@ -322,7 +345,7 @@ class PanasonicSession():
             "User-Agent": "G-RAC",
             "X-APP-TIMESTAMP": timestamp,
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
+            "X-APP-VERSION": self._app_version,
             # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
             # "X-CFC-API-KEY": "0",
             "X-CFC-API-KEY": generate_random_string_hex(128),

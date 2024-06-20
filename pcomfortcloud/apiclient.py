@@ -23,6 +23,9 @@ class ApiClient(panasonicsession.PanasonicSession):
         self._device_indexer = {}
         self._raw = raw
         self._acc_client_id = None
+        self._app_version
+
+        self._update_app_version()
 
     def start_session(self):
         super().start_session()
@@ -35,6 +38,26 @@ class ApiClient(panasonicsession.PanasonicSession):
             200
         )
         self._devices = None
+
+    def _update_app_version(self):
+
+        if self._raw:
+            print("--- auto detecting latest app version")
+        try:
+            data = re.get(
+                "https://itunes.apple.com/lookup?id=1348640525").json()
+            version = data['results'][0]['version']
+            if version is not None:
+                if self._raw:
+                    print("--- found version: {}".format(version))
+                self._app_version = version
+                return
+        except Exception as e:
+            print(f"Get version: {e}")
+            pass
+        if self._raw:
+            print(
+                "--- failed to detect app version using version: {}".format(self._app_version))
 
     def get_devices(self):
         if self._devices is None:
