@@ -42,6 +42,7 @@ class PanasonicSession():
     BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
     BASE_PATH_ACC = "https://accsmart.panasonic.com"
     X_APP_VERSION = "1.20.0"
+    VERSION_GIST = "https://api.github.com/gists/e886d56531dbcde08aa11c096ab0a219"
 
     # token:
     # - access_token
@@ -59,26 +60,23 @@ class PanasonicSession():
         self._raw = raw
         self._app_version = self.X_APP_VERSION
 
-        # Currently the latest version on the app store does not
-        # work, so we need to ignore the latest version, and use
-        # the previous version number. When that changes, uncomment this
-        # self._update_app_version()
+        self._update_app_version()
 
     def _update_app_version(self):
 
         if self._raw:
             print("--- auto detecting latest app version")
         try:
-            data = requests.get(
-                "https://itunes.apple.com/lookup?id=1348640525").json()
-            version = data['results'][0]['version']
+            response = requests.get(PanasonicSession.VERSION_GIST)
+            data = json.loads(response.text)
+            version = data['files']['comfort-cloud-version']['content']
             if version is not None:
                 if self._raw:
                     print("--- found version: {}".format(version))
                 self._app_version = version
                 return
         except Exception as e:
-            print(f"Get version: {e}")
+            print(f"Error Get version: {e}")
             pass
         if self._raw:
             print(
