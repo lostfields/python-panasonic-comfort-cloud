@@ -20,7 +20,7 @@ class ApiClient(panasonicsession.PanasonicSession):
     def __init__(self,
                  username,
                  password,
-                 token_file_name='~/.panasonic-token',
+                 token_file_name='token.json',
                  raw=False):
         super().__init__(username, password, token_file_name, raw)
 
