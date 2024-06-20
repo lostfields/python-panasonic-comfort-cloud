@@ -7,9 +7,12 @@ import string
 import time
 import urllib
 import requests
+import logging
 
 from bs4 import BeautifulSoup
 from . import exceptions
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def generate_random_string(length):
@@ -42,8 +45,7 @@ class PanasonicSession():
     BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
     BASE_PATH_ACC = "https://accsmart.panasonic.com"
     X_APP_VERSION = "1.20.0"
-    VERSION_GIST = "https://api.github.com/gists/e886d56531dbcde08aa11c096ab0a219"
-
+    APPBRAIN_URL = "https://www.appbrain.com/app/panasonic-comfort-cloud/com.panasonic.ACCsmart"
     # token:
     # - access_token
     # - refresh_token
@@ -63,18 +65,22 @@ class PanasonicSession():
         self._update_app_version()
 
     def _update_app_version(self):
-
         if self._raw:
             print("--- auto detecting latest app version")
         try:
-            response = requests.get(PanasonicSession.VERSION_GIST)
-            data = json.loads(response.text)
-            version = data['files']['comfort-cloud-version']['content']
-            if version is not None:
-                if self._raw:
-                    print("--- found version: {}".format(version))
+            response = requests.get(PanasonicSession.APPBRAIN_URL)
+            responseContent = response.content
+            soup = BeautifulSoup(responseContent, "html.parser")
+            meta_tag = soup.find("meta", itemprop="softwareVersion")
+            if meta_tag:
+                version = meta_tag['content']
+                _LOGGER.debug(f"Found app version: {version}")
                 self._app_version = version
+                # self._settings.version = version
+                if self._raw:
+                    print("--- found version: {}".format(self._app_version))
                 return
+
         except Exception as e:
             print(f"Error Get version: {e}")
             pass
