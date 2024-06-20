@@ -2,7 +2,6 @@ import base64
 import datetime
 import hashlib
 import json
-import os
 import random
 import string
 import time
@@ -53,47 +52,34 @@ class PanasonicSession():
     # - acc_client_id
     # - scope
 
-    def __init__(self, username, password, token_file_name, raw):
+    def __init__(self, username, password, token, raw=False):
         self._username = username
         self._password = password
-        self._token_file_name = os.path.expanduser(token_file_name)
-        self._token = None
+        self._token = token
         self._raw = raw
 
-    def start_session(self):
-        if os.path.exists(self._token_file_name):
-            # we logged in at least once before
-            # check if the token is still ok, if not, get a new one
-            self._load_token_from_file()
-            if not self._check_token_is_valid():
-                self._refresh_token()
-        else:
-            # first login, get a new token
-            self._get_new_token()
-
-    def _load_token_from_file(self):
-        with open(self._token_file_name, "r") as token_file:
-            self._token = json.load(token_file)
-
     def _check_token_is_valid(self):
-        now = datetime.datetime.now()
-        now_unix = time.mktime(now.timetuple())
+        if self._token is not None:
+            now = datetime.datetime.now()
+            now_unix = time.mktime(now.timetuple())
 
-        # multiple parts in access_token which are separated by .
-        part_of_token_b64 = str(self._token["access_token"].split(".")[1])
-        # as seen here: https://stackoverflow.com/questions/3302946/how-to-decode-base64-url-in-python
-        part_of_token = base64.urlsafe_b64decode(part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
-        token_info_json = json.loads(part_of_token)
+            # multiple parts in access_token which are separated by .
+            part_of_token_b64 = str(self._token["access_token"].split(".")[1])
+            # as seen here: https://stackoverflow.com/questions/3302946/how-to-decode-base64-url-in-python
+            part_of_token = base64.urlsafe_b64decode(part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
+            token_info_json = json.loads(part_of_token)
 
-        if self._raw:
-            print(json.dumps(token_info_json, indent=4))
+            if self._raw:
+                print(json.dumps(token_info_json, indent=4))
 
-        expiry_in_token = token_info_json["exp"]
+            expiry_in_token = token_info_json["exp"]
 
-        if (now_unix > expiry_in_token) or \
-                (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
+            if (now_unix > expiry_in_token) or \
+                    (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
+                return False
+            return True
+        else:
             return False
-        return True
 
     def _get_new_token(self):
         requests_session = requests.Session()
@@ -275,8 +261,15 @@ class PanasonicSession():
             "scope": token_response["scope"]
         }
 
-        with open(self._token_file_name, "w") as token_file:
-            json.dump(self._token, token_file, indent=4)
+    def get_token(self):
+        return self._token
+
+    def start_session(self):
+        if self._token is not None:
+            if not self._check_token_is_valid():
+                self._refresh_token()
+        else:
+            self._get_new_token()
 
     def stop_session(self):
         response = requests.post(
@@ -286,10 +279,6 @@ class PanasonicSession():
         check_response(response, "logout", 200)
         if json.loads(response.text)["result"] != 0:
             # issue during logout, but do we really care?
-            pass
-        try:
-            os.remove(self._token_file_name)
-        except FileNotFoundError:
             pass
 
     def _refresh_token(self):
@@ -323,10 +312,7 @@ class PanasonicSession():
             "scope": token_response["scope"]
         }
 
-        with open(self._token_file_name, "w") as token_file:
-            json.dump(self._token, token_file, indent=4)
-
-    def _get_header_for_api_calls(self):
+    def _get_header_for_api_calls(self, no_client_id=False):
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         return {

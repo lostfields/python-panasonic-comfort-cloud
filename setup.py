@@ -35,8 +35,4 @@ setup(
     ],
     packages=['pcomfortcloud'],
     zip_safe=False,
-    entry_points={
-        'console_scripts': [
-            'pcomfortcloud=pcomfortcloud.__main__:main',
-        ]
-    })
+)
