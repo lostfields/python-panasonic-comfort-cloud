@@ -1,14 +1,15 @@
+import base64
 import datetime
-import time
+import hashlib
 import json
 import random
 import string
-import requests
-import os
+import time
 import urllib
-import hashlib
-import base64
+import requests
+
 from bs4 import BeautifulSoup
+from . import exceptions
 
 
 def generate_random_string(length):
@@ -19,11 +20,11 @@ def generate_random_string_hex(length):
     return ''.join(random.choice(string.hexdigits) for _ in range(length))
 
 
-def check_response(response, function_call, expected_status):
+def check_response(response, function_description, expected_status):
     if response.status_code != expected_status:
-        raise Exception(
-            f"({function_call}: Expected status code {
-                expected_status}, received: {response.status_code}."
+        raise exceptions.ResponseError(
+            f"({function_description}: Expected status code {expected_status}, received: {response.status_code}: " +
+            f"{response.text}"
         )
 
 
@@ -34,10 +35,13 @@ def get_querystring_parameter_from_header_entry_url(response, header_entry, quer
     return params.get(querystring_parameter, [None])[0]
 
 
-class PanasonicSession(object):
+class PanasonicSession():
     APP_CLIENT_ID = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
     AUTH_0_CLIENT = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
     REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
+    BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
+    BASE_PATH_ACC = "https://accsmart.panasonic.com"
+    X_APP_VERSION = "1.20.0"
 
     # token:
     # - access_token
@@ -48,36 +52,34 @@ class PanasonicSession(object):
     # - acc_client_id
     # - scope
 
-    def __init__(self, username, password, token_file_name, raw):
+    def __init__(self, username, password, token, raw=False):
         self._username = username
         self._password = password
-        self._token_file_name = os.path.expanduser(token_file_name)
-        self._token = None
+        self._token = token
         self._raw = raw
 
-    # TODO this should be renamed to something other than login
-    # Perhaps part of the init function
-    def login(self):
-        if os.path.exists(self._token_file_name):
-            # we logged in at least once before
-            # check if the token is still ok, if not, get a new one
-            self._load_token_from_file()
-            if not self._check_token_is_valid():
-                self._refresh_token()
-        else:
-            # first login, get a new token
-            self._get_new_token()
-
-    def _load_token_from_file(self):
-        with open(self._token_file_name, "r") as token_file:
-            self._token = json.load(token_file)
-
     def _check_token_is_valid(self):
-        now = datetime.datetime.now()
-        now_unix = time.mktime(now.timetuple())
-        if now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]:
+        if self._token is not None:
+            now = datetime.datetime.now()
+            now_unix = time.mktime(now.timetuple())
+
+            # multiple parts in access_token which are separated by .
+            part_of_token_b64 = str(self._token["access_token"].split(".")[1])
+            # as seen here: https://stackoverflow.com/questions/3302946/how-to-decode-base64-url-in-python
+            part_of_token = base64.urlsafe_b64decode(part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
+            token_info_json = json.loads(part_of_token)
+
+            if self._raw:
+                print(json.dumps(token_info_json, indent=4))
+
+            expiry_in_token = token_info_json["exp"]
+
+            if (now_unix > expiry_in_token) or \
+                    (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
+                return False
+            return True
+        else:
             return False
-        return True
 
     def _get_new_token(self):
         requests_session = requests.Session()
@@ -96,7 +98,7 @@ class PanasonicSession(object):
         # --------------------------------------------------------------------
 
         response = requests_session.get(
-            'https://authglb.digital.panasonic.com/authorize',
+            f'{PanasonicSession.BASE_PATH_AUTH}/authorize',
             headers={
                 "user-agent": "okhttp/4.10.0",
             },
@@ -124,7 +126,7 @@ class PanasonicSession(object):
             response, 'Location', 'state')
 
         response = requests_session.get(
-            f"https://authglb.digital.panasonic.com{location}",
+            f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
             allow_redirects=False)
         check_response(response, 'authorize_redirect', 200)
 
@@ -136,7 +138,7 @@ class PanasonicSession(object):
         # -------------------------------------------------------------------
 
         response = requests_session.post(
-            'https://authglb.digital.panasonic.com/usernamepassword/login',
+            f'{PanasonicSession.BASE_PATH_AUTH}/usernamepassword/login',
             headers={
                 "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
                 "user-agent": "okhttp/4.10.0",
@@ -174,7 +176,7 @@ class PanasonicSession(object):
         user_agent += "(KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
 
         response = requests_session.post(
-            url="https://authglb.digital.panasonic.com/login/callback",
+            url=f"{PanasonicSession.BASE_PATH_AUTH}/login/callback",
             data=parameters,
             headers={
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -190,7 +192,7 @@ class PanasonicSession(object):
         location = response.headers['Location']
 
         response = requests_session.get(
-            f"https://authglb.digital.panasonic.com{location}",
+            f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
             allow_redirects=False)
         check_response(response, 'login_redirect', 302)
 
@@ -206,7 +208,7 @@ class PanasonicSession(object):
         unix_time_token_received = time.mktime(now.timetuple())
 
         response = requests_session.post(
-            'https://authglb.digital.panasonic.com/oauth/token',
+            f'{PanasonicSession.BASE_PATH_AUTH}/oauth/token',
             headers={
                 "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
                 "user-agent": "okhttp/4.10.0",
@@ -230,14 +232,14 @@ class PanasonicSession(object):
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         response = requests.post(
-            'https://accsmart.panasonic.com/auth/v2/login',
+            f'{PanasonicSession.BASE_PATH_ACC}/auth/v2/login',
             headers={
                 "Content-Type": "application/json;charset=utf-8",
                 "User-Agent": "G-RAC",
                 "X-APP-NAME": "Comfort Cloud",
                 "X-APP-TIMESTAMP": timestamp,
                 "X-APP-TYPE": "1",
-                "X-APP-VERSION": "1.20.0",
+                "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
                 "X-CFC-API-KEY": generate_random_string_hex(128),
                 "X-User-Authorization-V2": "Bearer " + token_response["access_token"]
             },
@@ -259,30 +261,33 @@ class PanasonicSession(object):
             "scope": token_response["scope"]
         }
 
-        with open(self._token_file_name, "w") as token_file:
-            json.dump(self._token, token_file, indent=4)
+    def get_token(self):
+        return self._token
 
-    def logout(self):
+    def start_session(self):
+        if self._token is not None:
+            if not self._check_token_is_valid():
+                self._refresh_token()
+        else:
+            self._get_new_token()
+
+    def stop_session(self):
         response = requests.post(
-            "https://accsmart.panasonic.com/auth/v2/logout",
-            headers=self.get_header_for_api_calls()
+            f"{PanasonicSession.BASE_PATH_ACC}/auth/v2/logout",
+            headers=self._get_header_for_api_calls()
         )
-        check_response(response, 200)
+        check_response(response, "logout", 200)
         if json.loads(response.text)["result"] != 0:
             # issue during logout, but do we really care?
             pass
-        try:
-            os.remove(token_file_name)
-        except FileNotFoundError:
-            pass
 
-    def refresh_token(self):
+    def _refresh_token(self):
         # do before, so that timestamp is older rather than newer
         now = datetime.datetime.now()
         unix_time_token_received = time.mktime(now.timetuple())
 
         response = requests.post(
-            'https://authglb.digital.panasonic.com/oauth/token',
+            f'{PanasonicSession.BASE_PATH_AUTH}/oauth/token',
             headers={
                 "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
                 "user-agent": "okhttp/4.10.0",
@@ -307,10 +312,7 @@ class PanasonicSession(object):
             "scope": token_response["scope"]
         }
 
-        with open(self._token_file_name, "w") as token_file:
-            json.dump(self._token, token_file, indent=4)
-
-    def get_header_for_api_calls(self):
+    def _get_header_for_api_calls(self, no_client_id=False):
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         return {
@@ -319,65 +321,70 @@ class PanasonicSession(object):
             "User-Agent": "G-RAC",
             "X-APP-TIMESTAMP": timestamp,
             "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.0",
+            "X-APP-VERSION": PanasonicSession.X_APP_VERSION,
+            # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
             # "X-CFC-API-KEY": "0",
             "X-CFC-API-KEY": generate_random_string_hex(128),
             "X-Client-Id": self._token["acc_client_id"],
             "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
         }
 
-    def get_user_info(self):
-        if self._raw:
-            print("--- Getting User Info")
+    def _get_user_info(self):
+        response = requests.get(
+            f'{PanasonicSession.BASE_PATH_AUTH}/userinfo',
+            headers={
+                "Auth0-Client": self.AUTH_0_CLIENT,
+                "Authorization": "Bearer " + self._token["access_token"]
+            })
+        check_response(response, 'userinfo', 200)
 
-        response = None
+    def execute_post(self, url, json_data, function_description, expected_status_code):
+        self._ensure_valid_token()
+
+        try:
+            response = requests.post(
+                url,
+                json=json_data,
+                headers=self._get_header_for_api_calls()
+            )
+        except requests.exceptions.RequestException as ex:
+            raise exceptions.RequestError(ex)
+
+        self._print_response_if_raw_is_set(response, function_description)
+        check_response(response, function_description, expected_status_code)
+        return json.loads(response.text)
+
+    def execute_get(self, url, function_description, expected_status_code):
+        self._ensure_valid_token()
 
         try:
             response = requests.get(
-                'https://authglb.digital.panasonic.com/userinfo',
-                headers={
-                    "Auth0-Client": self.AUTH_0_CLIENT,
-                    "Authorization": "Bearer " + self._token["access_token"]
-                })
-
-            if 2 != response.status_code // 100:
-                raise session.ResponseError(
-                    response.status_code, response.text)
-
+                url,
+                headers=self._get_header_for_api_calls()
+            )
         except requests.exceptions.RequestException as ex:
-            raise session.RequestError(ex)
+            raise exceptions.RequestError(ex)
 
+        self._print_response_if_raw_is_set(response, function_description)
+        check_response(response, function_description, expected_status_code)
+        return json.loads(response.text)
 
-if __name__ == "__main__":
-    username = ""
-    password = ""
-    token_file_name = "token.json"
+    def _print_response_if_raw_is_set(self, response, function_description):
+        if self._raw:
+            print("=" * 79)
+            print(f"Response: {function_description}")
+            print("=" * 79)
+            print(f"Status: {response.status_code}")
+            print("-" * 79)
+            print("Headers:")
+            for header in response.headers:
+                print(f'{header}: {response.headers[header]}')
+            print("-" * 79)
+            print("Response body:")
+            print(response.text)
+            print("-" * 79)
 
-    # force creation
-    try:
-        os.remove(token_file_name)
-    except FileNotFoundError:
-        pass
-
-    session = PanasonicSession(username, password, token_file_name)
-    session.login()
-
-    # token should be here now, call login again for the loading use case
-    session = PanasonicSession(username, password, token_file_name)
-    session.login()
-
-    with open(token_file_name, "r") as token_file:
-        print(json.load(token_file))
-
-    session.refresh_token()
-
-    with open(token_file_name, "r") as token_file:
-        print(json.load(token_file))
-
-    response = requests.get(
-        'https://accsmart.panasonic.com/device/group',
-        headers=session.get_header_for_api_calls())
-    print(response.status_code)
-    print(response.headers)
-    print(response.text)
-    print(response.content)
+    def _ensure_valid_token(self):
+        if self._check_token_is_valid():
+            return
+        self._refresh_token()
