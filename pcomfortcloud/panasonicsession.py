@@ -156,7 +156,7 @@ class PanasonicSession():
         state = get_querystring_parameter_from_header_entry_url(
             response, 'Location', 'state')
 
-        if not location.startsWith(PanasonicSession.REDIRECT_URI):
+        if not location.startswith(PanasonicSession.REDIRECT_URI):
             response = requests_session.get(
                 f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
                 allow_redirects=False)
