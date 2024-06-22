@@ -1,4 +1,3 @@
 requests
-aiohttp
 urllib3
 bs4
