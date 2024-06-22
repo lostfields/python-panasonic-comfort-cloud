@@ -7,12 +7,9 @@ import string
 import time
 import urllib
 import requests
-import logging
 
 from bs4 import BeautifulSoup
 from . import exceptions
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def generate_random_string(length):
@@ -60,9 +57,7 @@ class PanasonicSession():
         self._password = password
         self._token = token
         self._raw = raw
-        self._app_version = self.X_APP_VERSION
-
-        self._update_app_version()
+        self._app_version = self._update_app_version()
 
     def _update_app_version(self):
         if self._raw:
@@ -74,19 +69,16 @@ class PanasonicSession():
             meta_tag = soup.find("meta", itemprop="softwareVersion")
             if meta_tag:
                 version = meta_tag['content']
-                _LOGGER.debug(f"Found app version: {version}")
                 self._app_version = version
-                # self._settings.version = version
                 if self._raw:
                     print("--- found version: {}".format(self._app_version))
                 return
 
-        except Exception as e:
-            print(f"Error Get version: {e}")
+        except Exception:
+            self._app_version = self.X_APP_VERSION
+            if self._raw:
+                print("--- failed to detect app version using version default")
             pass
-        if self._raw:
-            print(
-                "--- failed to detect app version using version: {}".format(self._app_version))
 
     def _check_token_is_valid(self):
         if self._token is not None:
