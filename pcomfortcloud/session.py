@@ -68,15 +68,19 @@ class PanasonicSession():
             responseContent = response.content
             soup = BeautifulSoup(responseContent, "html.parser")
             meta_tag = soup.find("meta", itemprop="softwareVersion")
-            if meta_tag:
+            if meta_tag is not None:
                 version = meta_tag['content']
                 self._app_version = version
                 if self._raw:
                     print("--- found version: {}".format(self._app_version))
                 return
+            else:
+                self._app_version = PanasonicSession.X_APP_VERSION
+                print("--- Error finding meta_tag")
+                return
 
         except Exception:
-            self._app_version = self.X_APP_VERSION
+            self._app_version = PanasonicSession.X_APP_VERSION
             if self._raw:
                 print("--- failed to detect app version using version default")
             pass
