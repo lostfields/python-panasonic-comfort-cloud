@@ -57,7 +57,8 @@ class PanasonicSession():
         self._password = password
         self._token = token
         self._raw = raw
-        self._app_version = self._update_app_version()
+        self._app_version = PanasonicSession.X_APP_VERSION
+        self._update_app_version()
 
     def _update_app_version(self):
         if self._raw:
@@ -81,6 +82,8 @@ class PanasonicSession():
             pass
 
     def _check_token_is_valid(self):
+        if self._raw:
+            print("--- Checking token is valid")
         if self._token is not None:
             now = datetime.datetime.now()
             now_unix = time.mktime(now.timetuple())
