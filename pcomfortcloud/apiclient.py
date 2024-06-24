@@ -14,7 +14,7 @@ class ApiClient(session.PanasonicSession):
     def __init__(self,
                  username,
                  password,
-                 token,
+                 token=None,
                  raw=False):
         super().__init__(username, password, token, raw)
 
