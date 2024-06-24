@@ -6,11 +6,11 @@ import hashlib
 import re
 from urllib.parse import quote_plus
 
-from . import panasonicsession
+from . import session
 from . import constants
 
 
-class ApiClient(panasonicsession.PanasonicSession):
+class ApiClient(session.PanasonicSession):
     def __init__(self,
                  username,
                  password,
@@ -247,27 +247,27 @@ class ApiClient(panasonicsession.PanasonicSession):
 
     def _get_group_url(self):
         return '{base_url}/device/group'.format(
-            base_url=panasonicsession.PanasonicSession.BASE_PATH_ACC
+            base_url=session.PanasonicSession.BASE_PATH_ACC
         )
 
     def _get_device_status_url(self, guid):
         return '{base_url}/deviceStatus/{guid}'.format(
-            base_url=panasonicsession.PanasonicSession.BASE_PATH_ACC,
+            base_url=session.PanasonicSession.BASE_PATH_ACC,
             guid=re.sub('(?i)\%2f', 'f', quote_plus(guid))
         )
 
     def _get_device_status_now_url(self, guid):
         return '{base_url}/deviceStatus/now/{guid}'.format(
-            base_url=panasonicsession.PanasonicSession.BASE_PATH_ACC,
+            base_url=session.PanasonicSession.BASE_PATH_ACC,
             guid=re.sub('(?i)\%2f', 'f', quote_plus(guid))
         )
 
     def _get_device_status_control_url(self):
         return '{base_url}/deviceStatus/control'.format(
-            base_url=panasonicsession.PanasonicSession.BASE_PATH_ACC
+            base_url=session.PanasonicSession.BASE_PATH_ACC
         )
 
     def _get_device_history_url(self):
         return '{base_url}/deviceHistoryData'.format(
-            base_url=panasonicsession.PanasonicSession.BASE_PATH_ACC,
+            base_url=session.PanasonicSession.BASE_PATH_ACC,
         )
