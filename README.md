@@ -99,8 +99,8 @@ optional arguments:
 ```python
 import pcomfortcloud
 
-session = pcomfortcloud.Session('user@example.com', 'mypassword')
-session.login()
+session = pcomfortcloud.ApiClient('user@example.com', 'mypassword', None)
+session.start_session()
 
 devices = session.get_devices()
 
