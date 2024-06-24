@@ -1,4 +1,5 @@
 # python-panasonic-comfort-cloud
+
 A python module for reading and changing status of panasonic climate devices through Panasonic Comfort Cloud app api
 
 ## Command line usage
@@ -17,7 +18,7 @@ positional arguments:
     set                 Set status of a device
     dump                Dump raw data of a device
     history             Dump history of a device
-    
+
 optional arguments:
   -h, --help            show this help message and exit
   -t TOKEN, --token TOKEN
@@ -95,11 +96,10 @@ optional arguments:
 
 ## Module usage
 
-
 ```python
 import pcomfortcloud
 
-session = pcomfortcloud.ApiClient('user@example.com', 'mypassword', None)
+session = pcomfortcloud.ApiClient('user@example.com', 'mypassword')
 session.start_session()
 
 devices = session.get_devices()
@@ -114,8 +114,10 @@ session.set_device(devices[0]['id'],
 ```
 
 ## PyPi package
+
 can be found at https://pypi.org/project/pcomfortcloud/
 
 ### How to publish package;
+
 - `python .\setup.py sdist bdist_wheel`
 - `python -m twine upload dist/*`
