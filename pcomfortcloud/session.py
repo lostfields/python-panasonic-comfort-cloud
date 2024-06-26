@@ -41,7 +41,7 @@ class PanasonicSession():
     REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
     BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
     BASE_PATH_ACC = "https://accsmart.panasonic.com"
-    X_APP_VERSION = "1.20.0"
+    X_APP_VERSION = "1.21.0"
     APPBRAIN_URL = "https://www.appbrain.com/app/panasonic-comfort-cloud/com.panasonic.ACCsmart"
     # token:
     # - access_token
