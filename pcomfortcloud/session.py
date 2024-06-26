@@ -1,456 +1,425 @@
-'''
-Panasonic session, using Panasonic Comfort Cloud app api
-'''
-
-import json
-import requests
-import os
-import urllib3
+import base64
+import datetime
 import hashlib
+import json
+import random
+import string
+import time
+import urllib
+import requests
 
-from . import urls
-from . import constants
-
-def _validate_response(response):
-    """ Verify that response is OK """
-    if response.status_code == 200:
-        return
-    raise ResponseError(response.status_code, response.text)
-
-
-class Error(Exception):
-    ''' Panasonic session error '''
-    pass
-
-class RequestError(Error):
-    ''' Wrapped requests.exceptions.RequestException '''
-    pass
+from bs4 import BeautifulSoup
+from . import exceptions
 
 
-class LoginError(Error):
-    ''' Login failed '''
-    pass
-
-class ResponseError(Error):
-    ''' Unexcpected response '''
-    def __init__(self, status_code, text):
-        super(ResponseError, self).__init__(
-            'Invalid response'
-            ', status code: {0} - Data: {1}'.format(
-                status_code,
-                text))
-        self.status_code = status_code
-        self.text = text
+def generate_random_string(length):
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
-class Session(object):
-    """ Verisure app session
+def generate_random_string_hex(length):
+    return ''.join(random.choice(string.hexdigits) for _ in range(length))
 
-    Args:
-        username (str): Username used to login to verisure app
-        password (str): Password used to login to verisure app
 
-    """
+def check_response(response, function_description, expected_status):
+    if response.status_code != expected_status:
+        raise exceptions.ResponseError(
+            f"({function_description}: Expected status code {expected_status}, received: {response.status_code}: " +
+            f"{response.text}"
+        )
 
-    def __init__(self, username, password, tokenFileName='~/.panasonic-token', raw=False, verifySsl=True):
+
+def get_querystring_parameter_from_header_entry_url(response, header_entry, querystring_parameter):
+    header_entry_value = response.headers[header_entry]
+    parsed_url = urllib.parse.urlparse(header_entry_value)
+    params = urllib.parse.parse_qs(parsed_url.query)
+    return params.get(querystring_parameter, [None])[0]
+
+
+class PanasonicSession():
+    APP_CLIENT_ID = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
+    AUTH_0_CLIENT = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
+    REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
+    BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
+    BASE_PATH_ACC = "https://accsmart.panasonic.com"
+    X_APP_VERSION = "1.21.0"
+    APPBRAIN_URL = "https://www.appbrain.com/app/panasonic-comfort-cloud/com.panasonic.ACCsmart"
+    # token:
+    # - access_token
+    # - refresh_token
+    # - id_token
+    # - unix_timestamp_token_received
+    # - expires_in_sec
+    # - acc_client_id
+    # - scope
+
+    def __init__(self, username, password, token, raw=False):
         self._username = username
         self._password = password
-        self._tokenFileName = os.path.expanduser(tokenFileName)
-        self._vid = None
-        self._groups = None
-        self._devices = None
-        self._deviceIndexer = {}
+        self._token = token
         self._raw = raw
+        self._app_version = PanasonicSession.X_APP_VERSION
+        self._update_app_version()
 
-        if verifySsl == False:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            self._verifySsl = verifySsl
-        else:
-            self._verifySsl = os.path.join(os.path.dirname(__file__),
-                    "certificatechain.pem")
-
-    def __enter__(self):
-        self.login()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.logout()
-
-    def login(self):
-        """ Login to verisure app api """
-
-        if os.path.exists(self._tokenFileName):
-            with open(self._tokenFileName, 'r') as cookieFile:
-                self._vid = cookieFile.read().strip()
-
-            if self._raw: print("--- token found")
-
-            try:
-                self._get_groups()
-
-            except ResponseError:
-                if self._raw: print("--- token probably expired")
-
-                self._vid = None
-                self._devices = None
-                os.remove(self._tokenFileName)
-
-        if self._vid is None:
-            self._create_token()
-            with open(self._tokenFileName, 'w') as tokenFile:
-                tokenFile.write(self._vid)
-
-            self._get_groups()
-
-    def logout(self):
-        """ Logout """
-
-    def _headers(self):
-        return {
-            "X-APP-TYPE": "1",
-            "X-APP-VERSION": "1.20.1",
-            "X-User-Authorization": self._vid,
-            "X-APP-TIMESTAMP": "1",
-            "X-APP-NAME": "Comfort Cloud",
-            "X-CFC-API-KEY": "Comfort Cloud",
-            "User-Agent": "G-RAC",
-            "Accept": "application/json; charset=utf-8",
-            "Content-Type": "application/json; charset=utf-8"
-        }
-
-    def _create_token(self):
-        response = None
-
-        payload = {
-            "language": 0,
-            "loginId": self._username,
-            "password": self._password
-        }
-
-        if self._raw: print("--- creating token by authenticating")
-
+    def _update_app_version(self):
+        if self._raw:
+            print("--- auto detecting latest app version")
         try:
-            response = requests.post(urls.login(), json=payload, headers=self._headers(), verify=self._verifySsl)
-            if 2 != response.status_code // 100:
-                raise ResponseError(response.status_code, response.text)
-
-        except requests.exceptions.RequestException as ex:
-            raise LoginError(ex)
-
-        _validate_response(response)
-
-        if(self._raw is True):
-            print("--- raw beginning ---")
-            print(response.text)
-            print("--- raw ending    ---\n")
-
-        self._vid = json.loads(response.text)['uToken']
-
-    def _get_groups(self):
-        """ Get information about groups """
-        response = None
-
-        try:
-            response = requests.get(urls.get_groups(),headers=self._headers(), verify=self._verifySsl)
-
-            if 2 != response.status_code // 100:
-                raise ResponseError(response.status_code, response.text)
-
-        except requests.exceptions.RequestException as ex:
-            raise RequestError(ex)
-
-        _validate_response(response)
-
-        if(self._raw is True):
-            print("--- _get_groups()")
-            print("--- raw beginning ---")
-            print(response.text)
-            print("--- raw ending    ---\n")
-
-        self._groups = json.loads(response.text)
-        self._devices = None
-
-    def get_devices(self, group=None):
-        if self._vid is None:
-            self.login()
-
-        if self._devices is None:
-            self._devices = []
-
-            for group in self._groups['groupList']:
-                if 'deviceList' in group:
-                    list = group.get('deviceList', [])
-                else:
-                    list = group.get('deviceIdList', [])
-
-                for device in list:
-                    if device:
-                        id = None
-                        if 'deviceHashGuid' in device:
-                            id = device['deviceHashGuid']
-                        else:
-                            id = hashlib.md5(device['deviceGuid'].encode('utf-8')).hexdigest()
-
-                        self._deviceIndexer[id] = device['deviceGuid']
-                        self._devices.append({
-                            'id': id,
-                            'name': device['deviceName'],
-                            'group': group['groupName'],
-                            'model': device['deviceModuleNumber'] if 'deviceModuleNumber' in device else ''
-                        })
-
-        return self._devices
-
-    def dump(self, id):
-        deviceGuid = self._deviceIndexer.get(id)
-
-        if(deviceGuid):
-            response = None
-
-            try:
-                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
-
-                if 2 != response.status_code // 100:
-                    raise ResponseError(response.status_code, response.text)
-
-            except requests.exceptions.RequestException as ex:
-                raise RequestError(ex)
-
-            _validate_response(response)
-            return json.loads(response.text)
-
-        return None
-
-    def history(self, id, mode, date, tz="+01:00"):
-        deviceGuid = self._deviceIndexer.get(id)
-
-        if(deviceGuid):
-            response = None
-
-            try:
-                dataMode = constants.dataMode[mode].value
-            except KeyError:
-                raise Exception("Wrong mode parameter")
-
-            payload = {
-                "deviceGuid": deviceGuid,
-                "dataMode": dataMode,
-                "date": date,
-                "osTimezone": tz
-            }
-
-            try:
-                response = requests.post(urls.history(), json=payload, headers=self._headers(), verify=self._verifySsl)
-
-                if 2 != response.status_code // 100:
-                    raise ResponseError(response.status_code, response.text)
-
-            except requests.exceptions.RequestException as ex:
-                raise RequestError(ex)
-
-            _validate_response(response)
-
-            if(self._raw is True):
-                print("--- history()")
-                print("--- raw beginning ---")
-                print(response.text)
-                print("--- raw ending    ---")
-
-            _json = json.loads(response.text)
-            return {
-                'id': id,
-                'parameters': self._read_parameters(_json)
-            }
-
-        return None
-
-    def get_device(self, id):
-        deviceGuid = self._deviceIndexer.get(id)
-
-        if(deviceGuid):
-            response = None
-
-            try:
-                response = requests.get(urls.status(deviceGuid), headers=self._headers(), verify=self._verifySsl)
-
-                if 2 != response.status_code // 100:
-                    raise ResponseError(response.status_code, response.text)
-
-            except requests.exceptions.RequestException as ex:
-                raise RequestError(ex)
-
-            _validate_response(response)
-
-            if(self._raw is True):
-                print("--- get_device()")
-                print("--- raw beginning ---")
-                print(response.text)
-                print("--- raw ending    ---")
-
-
-            _json = json.loads(response.text)
-            return {
-                'id': id,
-                'parameters': self._read_parameters(_json['parameters'])
-            }
-
-        return None
-
-    def set_device(self, id, **kwargs):
-        """ Set parameters of device
-
-        Args:
-            id  (str): Id of the device
-            kwargs   : {temperature=float}, {mode=OperationMode}, {fanSpeed=FanSpeed}, {power=Power}, {airSwingHorizontal=}, {airSwingVertical=}, {eco=EcoMode}
-        """
-
-        parameters = {}
-        airX = None
-        airY = None
-
-        if kwargs is not None:
-            for key, value in kwargs.items():
-                if key == 'power' and isinstance(value, constants.Power):
-                    parameters['operate'] = value.value
-
-                if key == 'temperature':
-                    parameters['temperatureSet'] = value
-
-                if key == 'mode' and isinstance(value, constants.OperationMode):
-                    parameters['operationMode'] = value.value
-
-                if key == 'fanSpeed' and isinstance(value, constants.FanSpeed):
-                    parameters['fanSpeed'] = value.value
-
-                if key == 'airSwingHorizontal' and isinstance(value, constants.AirSwingLR):
-                    airX = value
-
-                if key == 'airSwingVertical' and isinstance(value, constants.AirSwingUD):
-                    airY = value
-                
-                if key == 'eco' and isinstance(value, constants.EcoMode):
-                    parameters['ecoMode'] = value.value
-
-                if key == 'nanoe' and isinstance(value, constants.NanoeMode) and value != constants.NanoeMode.Unavailable:
-                    parameters['nanoe'] = value.value
-
-
-        # routine to set the auto mode of fan (either horizontal, vertical, both or disabled)
-        if airX is not None or airY is not None:
-            fanAuto = 0
-            device = self.get_device(id)
-
-            if device and device['parameters']['airSwingHorizontal'].value == -1:
-                fanAuto = fanAuto | 1
-
-            if device and device['parameters']['airSwingVertical'].value == -1:
-                fanAuto = fanAuto | 2
-
-            if airX is not None:
-                if airX.value == -1:
-                    fanAuto = fanAuto | 1
-                else:
-                    fanAuto = fanAuto & ~1
-                    parameters['airSwingLR'] = airX.value
-
-            if airY is not None:
-                if airY.value == -1:
-                    fanAuto = fanAuto | 2
-                else:
-                    fanAuto = fanAuto & ~2
-                    print(airY.name)
-                    parameters['airSwingUD'] = airY.value
-
-            if fanAuto == 3:
-                parameters['fanAutoMode'] = constants.AirSwingAutoMode.Both.value
-            elif fanAuto == 1:
-                parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingLR.value
-            elif fanAuto == 2:
-                parameters['fanAutoMode'] = constants.AirSwingAutoMode.AirSwingUD.value
+            response = requests.get(PanasonicSession.APPBRAIN_URL)
+            responseContent = response.content
+            soup = BeautifulSoup(responseContent, "html.parser")
+            meta_tag = soup.find("meta", itemprop="softwareVersion")
+            if meta_tag is not None:
+                version = meta_tag['content']
+                self._app_version = version
+                if self._raw:
+                    print("--- found version: {}".format(self._app_version))
+                return
             else:
-                parameters['fanAutoMode'] = constants.AirSwingAutoMode.Disabled.value
+                self._app_version = PanasonicSession.X_APP_VERSION
+                print("--- Error finding meta_tag")
+                return
 
-        deviceGuid = self._deviceIndexer.get(id)
-        if(deviceGuid):
-            response = None
+        except Exception:
+            self._app_version = PanasonicSession.X_APP_VERSION
+            if self._raw:
+                print("--- failed to detect app version using version default")
+            pass
 
-            payload = {
-                "deviceGuid": deviceGuid,
-                "parameters": parameters
-            }
+    def _check_token_is_valid(self):
+        if self._raw:
+            print("--- Checking token is valid")
+        if self._token is not None:
+            now = datetime.datetime.now()
+            now_unix = time.mktime(now.timetuple())
 
-            if(self._raw is True):
-                print("--- set_device()")
-                print("--- raw out beginning ---")
-                print(payload)
-                print("--- raw out ending    ---")
+            # multiple parts in access_token which are separated by .
+            part_of_token_b64 = str(self._token["access_token"].split(".")[1])
+            # as seen here: https://stackoverflow.com/questions/3302946/how-to-decode-base64-url-in-python
+            part_of_token = base64.urlsafe_b64decode(
+                part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
+            token_info_json = json.loads(part_of_token)
 
-            try:
-                response = requests.post(urls.control(), json=payload, headers=self._headers(), verify=self._verifySsl)
+            if self._raw:
+                print(json.dumps(token_info_json, indent=4))
 
-                if 2 != response.status_code // 100:
-                    raise ResponseError(response.status_code, response.text)
+            expiry_in_token = token_info_json["exp"]
 
-            except requests.exceptions.RequestException as ex:
-                raise RequestError(ex)
-
-            _validate_response(response)
-
-            if(self._raw is True):
-                print("--- raw in beginning ---")
-                print(response.text)
-                print("--- raw in ending    ---\n")
-
-            _json = json.loads(response.text)
-
+            if (now_unix > expiry_in_token) or \
+                    (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
+                return False
             return True
+        else:
+            return False
 
-        return False
+    def _get_new_token(self):
+        requests_session = requests.Session()
 
-    def _read_parameters(self, parameters = {}):
-        value = {}
+        # generate initial state and code_challenge
+        state = generate_random_string(20)
+        code_verifier = generate_random_string(43)
 
-        _convert = {
-                'insideTemperature': 'temperatureInside',
-                'outTemperature': 'temperatureOutside',
-                'temperatureSet': 'temperature',
-                'currencyUnit': 'currencyUnit',
-                'energyConsumption': 'energyConsumption',
-                'estimatedCost': 'estimatedCost',
-                'historyDataList': 'historyDataList',
-            }
-        for key in _convert:
-            if key in parameters:
-                value[_convert[key]] = parameters[key]
+        code_challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(
+                code_verifier.encode('utf-8')
+            ).digest()).split('='.encode('utf-8'))[0].decode('utf-8')
 
-        if 'operate' in parameters:
-            value['power'] = constants.Power(parameters['operate'])
+        # --------------------------------------------------------------------
+        # AUTHORIZE
+        # --------------------------------------------------------------------
 
-        if 'operationMode' in parameters:
-            value['mode'] = constants.OperationMode(parameters['operationMode'])
+        response = requests_session.get(
+            f'{PanasonicSession.BASE_PATH_AUTH}/authorize',
+            headers={
+                "user-agent": "okhttp/4.10.0",
+            },
+            params={
+                "scope": "openid offline_access comfortcloud.control a2w.control",
+                "audience": f"https://digital.panasonic.com/{PanasonicSession.APP_CLIENT_ID}/api/v1/",
+                "protocol": "oauth2",
+                "response_type": "code",
+                "code_challenge": code_challenge,
+                "code_challenge_method": "S256",
+                "auth0Client": PanasonicSession.AUTH_0_CLIENT,
+                "client_id": PanasonicSession.APP_CLIENT_ID,
+                "redirect_uri": PanasonicSession.REDIRECT_URI,
+                "state": state,
+            },
+            allow_redirects=False)
+        check_response(response, 'authorize', 302)
 
-        if 'fanSpeed' in parameters:
-            value['fanSpeed'] = constants.FanSpeed(parameters['fanSpeed'])
+        # -------------------------------------------------------------------
+        # FOLLOW REDIRECT
+        # -------------------------------------------------------------------
 
-        if 'airSwingLR' in parameters:
-            value['airSwingHorizontal'] = constants.AirSwingLR(parameters['airSwingLR'])
+        location = response.headers['Location']
+        state = get_querystring_parameter_from_header_entry_url(
+            response, 'Location', 'state')
 
-        if 'airSwingUD' in parameters:
-            value['airSwingVertical'] = constants.AirSwingUD(parameters['airSwingUD'])
+        if not location.startswith(PanasonicSession.REDIRECT_URI):
+            response = requests_session.get(
+                f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
+                allow_redirects=False)
+            check_response(response, 'authorize_redirect', 200)
 
-        if 'ecoMode' in parameters:
-            value['eco'] = constants.EcoMode(parameters['ecoMode'])
+            # get the "_csrf" cookie
+            csrf = response.cookies['_csrf']
 
-        if 'nanoe' in parameters:
-            value['nanoe'] = constants.NanoeMode(parameters['nanoe'])
+            # -------------------------------------------------------------------
+            # LOGIN
+            # -------------------------------------------------------------------
 
-        if 'fanAutoMode' in parameters:
-            if parameters['fanAutoMode'] == constants.AirSwingAutoMode.Both.value:
-                value['airSwingHorizontal'] = constants.AirSwingLR.Auto
-                value['airSwingVertical'] = constants.AirSwingUD.Auto
-            elif parameters['fanAutoMode'] == constants.AirSwingAutoMode.AirSwingLR.value:
-                value['airSwingHorizontal'] = constants.AirSwingLR.Auto
-            elif parameters['fanAutoMode'] == constants.AirSwingAutoMode.AirSwingUD.value:
-                value['airSwingVertical'] = constants.AirSwingUD.Auto
+            response = requests_session.post(
+                f'{PanasonicSession.BASE_PATH_AUTH}/usernamepassword/login',
+                headers={
+                    "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
+                    "user-agent": "okhttp/4.10.0",
+                },
+                json={
+                    "client_id": PanasonicSession.APP_CLIENT_ID,
+                    "redirect_uri": PanasonicSession.REDIRECT_URI,
+                    "tenant": "pdpauthglb-a1",
+                    "response_type": "code",
+                    "scope": "openid offline_access comfortcloud.control a2w.control",
+                    "audience": f"https://digital.panasonic.com/{PanasonicSession.APP_CLIENT_ID}/api/v1/",
+                    "_csrf": csrf,
+                    "state": state,
+                    "_intstate": "deprecated",
+                    "username": self._username,
+                    "password": self._password,
+                    "lang": "en",
+                    "connection": "PanasonicID-Authentication"
+                },
+                allow_redirects=False)
+            check_response(response, 'login', 200)
 
-        return value
+            # -------------------------------------------------------------------
+            # CALLBACK
+            # -------------------------------------------------------------------
+
+            # get wa, wresult, wctx from body
+            soup = BeautifulSoup(response.content, "html.parser")
+            input_lines = soup.find_all("input", {"type": "hidden"})
+            parameters = dict()
+            for input_line in input_lines:
+                parameters[input_line.get("name")] = input_line.get("value")
+
+            user_agent = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 "
+            user_agent += "(KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
+
+            response = requests_session.post(
+                url=f"{PanasonicSession.BASE_PATH_AUTH}/login/callback",
+                data=parameters,
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "User-Agent": user_agent,
+                },
+                allow_redirects=False)
+            check_response(response, 'login_callback', 302)
+
+            # ------------------------------------------------------------------
+            # FOLLOW REDIRECT
+            # ------------------------------------------------------------------
+
+            location = response.headers['Location']
+
+            response = requests_session.get(
+                f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
+                allow_redirects=False)
+            check_response(response, 'login_redirect', 302)
+
+        # ------------------------------------------------------------------
+        # GET TOKEN
+        # ------------------------------------------------------------------
+
+        code = get_querystring_parameter_from_header_entry_url(
+            response, 'Location', 'code')
+
+        # do before, so that timestamp is older rather than newer
+        now = datetime.datetime.now()
+        unix_time_token_received = time.mktime(now.timetuple())
+
+        response = requests_session.post(
+            f'{PanasonicSession.BASE_PATH_AUTH}/oauth/token',
+            headers={
+                "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
+                "user-agent": "okhttp/4.10.0",
+            },
+            json={
+                "scope": "openid",
+                "client_id": PanasonicSession.APP_CLIENT_ID,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": PanasonicSession.REDIRECT_URI,
+                "code_verifier": code_verifier
+            },
+            allow_redirects=False)
+        check_response(response, 'get_token', 200)
+
+        token_response = json.loads(response.text)
+
+        # ------------------------------------------------------------------
+        # RETRIEVE ACC_CLIENT_ID
+        # ------------------------------------------------------------------
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        response = requests.post(
+            f'{PanasonicSession.BASE_PATH_ACC}/auth/v2/login',
+            headers={
+                "Content-Type": "application/json;charset=utf-8",
+                "User-Agent": "G-RAC",
+                "x-app-name": "Comfort Cloud",
+                "x-app-timestamp": timestamp,
+                "x-app-type": "1",
+                "x-app-version": self._app_version,
+                "x-cfc-api-key": generate_random_string_hex(128),
+                "x-user-authorization-v2": "Bearer " + token_response["access_token"]
+            },
+            json={
+                "language": 0
+            })
+        check_response(response, 'get_acc_client_id', 200)
+
+        json_body = json.loads(response.text)
+        acc_client_id = json_body["clientId"]
+
+        self._token = {
+            "access_token": token_response["access_token"],
+            "refresh_token": token_response["refresh_token"],
+            "id_token": token_response["id_token"],
+            "unix_timestamp_token_received": unix_time_token_received,
+            "expires_in_sec": token_response["expires_in"],
+            "acc_client_id": acc_client_id,
+            "scope": token_response["scope"]
+        }
+
+    def get_token(self):
+        return self._token
+
+    def start_session(self):
+        if self._token is not None:
+            if not self._check_token_is_valid():
+                self._refresh_token()
+        else:
+            self._get_new_token()
+
+    def stop_session(self):
+        response = requests.post(
+            f"{PanasonicSession.BASE_PATH_ACC}/auth/v2/logout",
+            headers=self._get_header_for_api_calls()
+        )
+        check_response(response, "logout", 200)
+        if json.loads(response.text)["result"] != 0:
+            # issue during logout, but do we really care?
+            pass
+
+    def _refresh_token(self):
+        # do before, so that timestamp is older rather than newer
+        now = datetime.datetime.now()
+        unix_time_token_received = time.mktime(now.timetuple())
+
+        response = requests.post(
+            f'{PanasonicSession.BASE_PATH_AUTH}/oauth/token',
+            headers={
+                "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
+                "user-agent": "okhttp/4.10.0",
+            },
+            json={
+                "scope": self._token["scope"],
+                "client_id": PanasonicSession.APP_CLIENT_ID,
+                "refresh_token": self._token["refresh_token"],
+                "grant_type": "refresh_token"
+            },
+            allow_redirects=False)
+        check_response(response, 'refresh_token', 200)
+        token_response = json.loads(response.text)
+
+        self._token = {
+            "access_token": token_response["access_token"],
+            "refresh_token": token_response["refresh_token"],
+            "id_token": token_response["id_token"],
+            "unix_timestamp_token_received": unix_time_token_received,
+            "expires_in_sec": token_response["expires_in"],
+            "acc_client_id": self._token["acc_client_id"],
+            "scope": token_response["scope"]
+        }
+
+    def _get_header_for_api_calls(self, no_client_id=False):
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        return {
+            "Content-Type": "application/json;charset=utf-8",
+            "x-app-name": "Comfort Cloud",
+            "user-agent": "G-RAC",
+            "x-app-timestamp": timestamp,
+            "x-app-type": "1",
+            "x-app-version": self._app_version,
+            # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
+            # "X-CFC-API-KEY": "0",
+            "x-cfc-api-key": generate_random_string_hex(128),
+            "x-client-id": self._token["acc_client_id"],
+            "x-user-authorization-v2": "Bearer " + self._token["access_token"]
+        }
+
+    def _get_user_info(self):
+        response = requests.get(
+            f'{PanasonicSession.BASE_PATH_AUTH}/userinfo',
+            headers={
+                "Auth0-Client": self.AUTH_0_CLIENT,
+                "Authorization": "Bearer " + self._token["access_token"]
+            })
+        check_response(response, 'userinfo', 200)
+
+    def execute_post(self,
+                     url,
+                     json_data,
+                     function_description,
+                     expected_status_code):
+        self._ensure_valid_token()
+
+        try:
+            response = requests.post(
+                url,
+                json=json_data,
+                headers=self._get_header_for_api_calls()
+            )
+        except requests.exceptions.RequestException as ex:
+            raise exceptions.RequestError(ex)
+
+        self._print_response_if_raw_is_set(response, function_description)
+        check_response(response, function_description, expected_status_code)
+        return json.loads(response.text)
+
+    def execute_get(self, url, function_description, expected_status_code):
+        self._ensure_valid_token()
+
+        try:
+            response = requests.get(
+                url,
+                headers=self._get_header_for_api_calls()
+            )
+        except requests.exceptions.RequestException as ex:
+            raise exceptions.RequestError(ex)
+
+        self._print_response_if_raw_is_set(response, function_description)
+        check_response(response, function_description, expected_status_code)
+        return json.loads(response.text)
+
+    def _print_response_if_raw_is_set(self, response, function_description):
+        if self._raw:
+            print("=" * 79)
+            print(f"Response: {function_description}")
+            print("=" * 79)
+            print(f"Status: {response.status_code}")
+            print("-" * 79)
+            print("Headers:")
+            for header in response.headers:
+                print(f'{header}: {response.headers[header]}')
+            print("-" * 79)
+            print("Response body:")
+            print(response.text)
+            print("-" * 79)
+
+    def _ensure_valid_token(self):
+        if self._check_token_is_valid():
+            return
+        self._refresh_token()
