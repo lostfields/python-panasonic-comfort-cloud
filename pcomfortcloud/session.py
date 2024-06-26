@@ -267,12 +267,12 @@ class PanasonicSession():
             headers={
                 "Content-Type": "application/json;charset=utf-8",
                 "User-Agent": "G-RAC",
-                "X-APP-NAME": "Comfort Cloud",
-                "X-APP-TIMESTAMP": timestamp,
-                "X-APP-TYPE": "1",
-                "X-APP-VERSION": self._app_version,
-                "X-CFC-API-KEY": generate_random_string_hex(128),
-                "X-User-Authorization-V2": "Bearer " + token_response["access_token"]
+                "x-app-name": "Comfort Cloud",
+                "x-app-timestamp": timestamp,
+                "x-app-type": "1",
+                "x-app-version": self._app_version,
+                "x-cfc-api-key": generate_random_string_hex(128),
+                "x-user-authorization-v2": "Bearer " + token_response["access_token"]
             },
             json={
                 "language": 0
@@ -348,16 +348,16 @@ class PanasonicSession():
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         return {
             "Content-Type": "application/json;charset=utf-8",
-            "X-APP-NAME": "Comfort Cloud",
-            "User-Agent": "G-RAC",
-            "X-APP-TIMESTAMP": timestamp,
-            "X-APP-TYPE": "1",
-            "X-APP-VERSION": self._app_version,
+            "x-app-name": "Comfort Cloud",
+            "user-agent": "G-RAC",
+            "x-app-timestamp": timestamp,
+            "x-app-type": "1",
+            "x-app-version": self._app_version,
             # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
             # "X-CFC-API-KEY": "0",
-            "X-CFC-API-KEY": generate_random_string_hex(128),
-            "X-Client-Id": self._token["acc_client_id"],
-            "X-User-Authorization-V2": "Bearer " + self._token["access_token"]
+            "x-cfc-api-key": generate_random_string_hex(128),
+            "x-client-id": self._token["acc_client_id"],
+            "x-user-authorization-v2": "Bearer " + self._token["access_token"]
         }
 
     def _get_user_info(self):
