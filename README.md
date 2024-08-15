@@ -99,16 +99,19 @@ optional arguments:
 ```python
 import pcomfortcloud
 
-session = pcomfortcloud.ApiClient('user@example.com', 'mypassword')
-session.start_session()
 
-devices = session.get_devices()
+session = pcomfortcloud.Session('user@example.com', 'mypassword')
+session.login()
+
+client = pcomfortcloud.ApiClient(session)
+
+devices = client.get_devices()
 
 print(devices)
 
-print(session.get_device(devices[0]['id']))
+print(client.get_device(devices[0]['id']))
 
-session.set_device(devices[0]['id'],
+client.set_device(devices[0]['id'],
   power = pcomfortcloud.constants.Power.On,
   temperature = 22.0)
 ```
