@@ -1,5 +1,4 @@
 # python-panasonic-comfort-cloud
-
 A python module for reading and changing status of panasonic climate devices through Panasonic Comfort Cloud app api
 
 ## Command line usage
@@ -96,6 +95,7 @@ optional arguments:
 
 ## Module usage
 
+
 ```python
 import pcomfortcloud
 
@@ -117,10 +117,8 @@ client.set_device(devices[0]['id'],
 ```
 
 ## PyPi package
-
 can be found at https://pypi.org/project/pcomfortcloud/
 
 ### How to publish package;
-
 - `python .\setup.py sdist bdist_wheel`
 - `python -m twine upload dist/*`

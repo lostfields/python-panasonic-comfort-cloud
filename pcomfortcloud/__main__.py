@@ -232,8 +232,7 @@ def main():
 
         if args.command == 'get':
             if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(
-                    1, len(api.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
 
             device = api.get_devices()[int(args.device) - 1]
             print("reading from device '{}' ({})".format(
@@ -243,12 +242,10 @@ def main():
 
         if args.command == 'set':
             if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(
-                    1, len(api.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
 
             device = api.get_devices()[int(args.device) - 1]
-            print("writing to device '{}' ({})".format(
-                device['name'], device['id']))
+            print("writing to device '{}' ({})".format(device['name'], device['id']))
 
             kwargs = {}
 
@@ -280,8 +277,7 @@ def main():
 
         if args.command == 'dump':
             if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(
-                    1, len(api.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
 
             device = api.get_devices()[int(args.device) - 1]
 
@@ -289,8 +285,7 @@ def main():
 
         if args.command == 'history':
             if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(
-                    1, len(api.get_devices())))
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
 
             device = api.get_devices()[int(args.device) - 1]
 
