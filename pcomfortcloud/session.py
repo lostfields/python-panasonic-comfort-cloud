@@ -10,7 +10,7 @@ import requests
 
 from bs4 import BeautifulSoup
 from . import exceptions
-
+from . import constants
 
 def generate_random_string(length):
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
@@ -35,14 +35,7 @@ def get_querystring_parameter_from_header_entry_url(response, header_entry, quer
     return params.get(querystring_parameter, [None])[0]
 
 
-class PanasonicSession():
-    APP_CLIENT_ID = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
-    AUTH_0_CLIENT = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
-    REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
-    BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
-    BASE_PATH_ACC = "https://accsmart.panasonic.com"
-    X_APP_VERSION = "1.21.0"
-    APPBRAIN_URL = "https://www.appbrain.com/app/panasonic-comfort-cloud/com.panasonic.ACCsmart"
+class Session():
     # token:
     # - access_token
     # - refresh_token
@@ -57,33 +50,8 @@ class PanasonicSession():
         self._password = password
         self._token = token
         self._raw = raw
-        self._app_version = PanasonicSession.X_APP_VERSION
+        self._app_version = constants.X_APP_VERSION
         self._update_app_version()
-
-    def _update_app_version(self):
-        if self._raw:
-            print("--- auto detecting latest app version")
-        try:
-            response = requests.get(PanasonicSession.APPBRAIN_URL)
-            responseContent = response.content
-            soup = BeautifulSoup(responseContent, "html.parser")
-            meta_tag = soup.find("meta", itemprop="softwareVersion")
-            if meta_tag is not None:
-                version = meta_tag['content']
-                self._app_version = version
-                if self._raw:
-                    print("--- found version: {}".format(self._app_version))
-                return
-            else:
-                self._app_version = PanasonicSession.X_APP_VERSION
-                print("--- Error finding meta_tag")
-                return
-
-        except Exception:
-            self._app_version = PanasonicSession.X_APP_VERSION
-            if self._raw:
-                print("--- failed to detect app version using version default")
-            pass
 
     def _check_token_is_valid(self):
         if self._raw:
@@ -128,20 +96,20 @@ class PanasonicSession():
         # --------------------------------------------------------------------
 
         response = requests_session.get(
-            f'{PanasonicSession.BASE_PATH_AUTH}/authorize',
+            f'{constants.BASE_PATH_AUTH}/authorize',
             headers={
                 "user-agent": "okhttp/4.10.0",
             },
             params={
                 "scope": "openid offline_access comfortcloud.control a2w.control",
-                "audience": f"https://digital.panasonic.com/{PanasonicSession.APP_CLIENT_ID}/api/v1/",
+                "audience": f"https://digital.panasonic.com/{constants.APP_CLIENT_ID}/api/v1/",
                 "protocol": "oauth2",
                 "response_type": "code",
                 "code_challenge": code_challenge,
                 "code_challenge_method": "S256",
-                "auth0Client": PanasonicSession.AUTH_0_CLIENT,
-                "client_id": PanasonicSession.APP_CLIENT_ID,
-                "redirect_uri": PanasonicSession.REDIRECT_URI,
+                "auth0Client": constants.AUTH_0_CLIENT,
+                "client_id": constants.APP_CLIENT_ID,
+                "redirect_uri": constants.REDIRECT_URI,
                 "state": state,
             },
             allow_redirects=False)
@@ -155,9 +123,9 @@ class PanasonicSession():
         state = get_querystring_parameter_from_header_entry_url(
             response, 'Location', 'state')
 
-        if not location.startswith(PanasonicSession.REDIRECT_URI):
+        if not location.startswith(constants.REDIRECT_URI):
             response = requests_session.get(
-                f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
+                f"{constants.BASE_PATH_AUTH}/{location}",
                 allow_redirects=False)
             check_response(response, 'authorize_redirect', 200)
 
@@ -169,18 +137,18 @@ class PanasonicSession():
             # -------------------------------------------------------------------
 
             response = requests_session.post(
-                f'{PanasonicSession.BASE_PATH_AUTH}/usernamepassword/login',
+                f'{constants.BASE_PATH_AUTH}/usernamepassword/login',
                 headers={
-                    "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
+                    "Auth0-Client": constants.AUTH_0_CLIENT,
                     "user-agent": "okhttp/4.10.0",
                 },
                 json={
-                    "client_id": PanasonicSession.APP_CLIENT_ID,
-                    "redirect_uri": PanasonicSession.REDIRECT_URI,
+                    "client_id": constants.APP_CLIENT_ID,
+                    "redirect_uri": constants.REDIRECT_URI,
                     "tenant": "pdpauthglb-a1",
                     "response_type": "code",
                     "scope": "openid offline_access comfortcloud.control a2w.control",
-                    "audience": f"https://digital.panasonic.com/{PanasonicSession.APP_CLIENT_ID}/api/v1/",
+                    "audience": f"https://digital.panasonic.com/{constants.APP_CLIENT_ID}/api/v1/",
                     "_csrf": csrf,
                     "state": state,
                     "_intstate": "deprecated",
@@ -207,7 +175,7 @@ class PanasonicSession():
             user_agent += "(KHTML, like Gecko) Chrome/113.0.0.0 Mobile Safari/537.36"
 
             response = requests_session.post(
-                url=f"{PanasonicSession.BASE_PATH_AUTH}/login/callback",
+                url=f"{constants.BASE_PATH_AUTH}/login/callback",
                 data=parameters,
                 headers={
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -223,7 +191,7 @@ class PanasonicSession():
             location = response.headers['Location']
 
             response = requests_session.get(
-                f"{PanasonicSession.BASE_PATH_AUTH}/{location}",
+                f"{constants.BASE_PATH_AUTH}/{location}",
                 allow_redirects=False)
             check_response(response, 'login_redirect', 302)
 
@@ -239,17 +207,17 @@ class PanasonicSession():
         unix_time_token_received = time.mktime(now.timetuple())
 
         response = requests_session.post(
-            f'{PanasonicSession.BASE_PATH_AUTH}/oauth/token',
+            f'{constants.BASE_PATH_AUTH}/oauth/token',
             headers={
-                "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
+                "Auth0-Client": constants.AUTH_0_CLIENT,
                 "user-agent": "okhttp/4.10.0",
             },
             json={
                 "scope": "openid",
-                "client_id": PanasonicSession.APP_CLIENT_ID,
+                "client_id": constants.APP_CLIENT_ID,
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": PanasonicSession.REDIRECT_URI,
+                "redirect_uri": constants.REDIRECT_URI,
                 "code_verifier": code_verifier
             },
             allow_redirects=False)
@@ -263,7 +231,7 @@ class PanasonicSession():
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         response = requests.post(
-            f'{PanasonicSession.BASE_PATH_ACC}/auth/v2/login',
+            f'{constants.BASE_PATH_ACC}/auth/v2/login',
             headers={
                 "Content-Type": "application/json;charset=utf-8",
                 "User-Agent": "G-RAC",
@@ -295,16 +263,16 @@ class PanasonicSession():
     def get_token(self):
         return self._token
 
-    def start_session(self):
+    def login(self):
         if self._token is not None:
             if not self._check_token_is_valid():
                 self._refresh_token()
         else:
             self._get_new_token()
 
-    def stop_session(self):
+    def logout(self):
         response = requests.post(
-            f"{PanasonicSession.BASE_PATH_ACC}/auth/v2/logout",
+            f"{constants.BASE_PATH_ACC}/auth/v2/logout",
             headers=self._get_header_for_api_calls()
         )
         check_response(response, "logout", 200)
@@ -318,14 +286,14 @@ class PanasonicSession():
         unix_time_token_received = time.mktime(now.timetuple())
 
         response = requests.post(
-            f'{PanasonicSession.BASE_PATH_AUTH}/oauth/token',
+            f'{constants.BASE_PATH_AUTH}/oauth/token',
             headers={
-                "Auth0-Client": PanasonicSession.AUTH_0_CLIENT,
+                "Auth0-Client": constants.AUTH_0_CLIENT,
                 "user-agent": "okhttp/4.10.0",
             },
             json={
                 "scope": self._token["scope"],
-                "client_id": PanasonicSession.APP_CLIENT_ID,
+                "client_id": constants.APP_CLIENT_ID,
                 "refresh_token": self._token["refresh_token"],
                 "grant_type": "refresh_token"
             },
@@ -362,7 +330,7 @@ class PanasonicSession():
 
     def _get_user_info(self):
         response = requests.get(
-            f'{PanasonicSession.BASE_PATH_AUTH}/userinfo',
+            f'{constants.BASE_PATH_AUTH}/userinfo',
             headers={
                 "Auth0-Client": self.AUTH_0_CLIENT,
                 "Authorization": "Bearer " + self._token["access_token"]
@@ -423,3 +391,29 @@ class PanasonicSession():
         if self._check_token_is_valid():
             return
         self._refresh_token()
+
+    def _update_app_version(self):
+        if self._raw:
+            print("--- auto detecting latest app version")
+        try:
+            response = requests.get(constants.APPBRAIN_URL)
+            responseContent = response.content
+            soup = BeautifulSoup(responseContent, "html.parser")
+            meta_tag = soup.find("meta", itemprop="softwareVersion")
+            if meta_tag is not None:
+                version = meta_tag['content']
+                self._app_version = version
+                if self._raw:
+                    print("--- found version: {}".format(self._app_version))
+                return
+            else:
+                self._app_version = constants.X_APP_VERSION
+                print("--- Error finding meta_tag")
+                return
+
+        except Exception:
+            self._app_version = constants.X_APP_VERSION
+            if self._raw:
+                print("--- failed to detect app version using version default")
+            pass
+

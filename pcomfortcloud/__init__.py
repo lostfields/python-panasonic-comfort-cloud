@@ -14,6 +14,10 @@ from .apiclient import (
     ApiClient
 )
 
+from .session import (
+    Session
+)
+
 from .exceptions import (
     Error,
     LoginError,

@@ -10,13 +10,9 @@ from . import session
 from . import constants
 
 
-class ApiClient(session.PanasonicSession):
-    def __init__(self,
-                 username,
-                 password,
-                 token=None,
-                 raw=False):
-        super().__init__(username, password, token, raw)
+class ApiClient():
+    def __init__(self, session: session.Session, raw=False):
+        self._session = session
 
         self._groups = None
         self._devices = None
@@ -24,12 +20,15 @@ class ApiClient(session.PanasonicSession):
         self._raw = raw
         self._acc_client_id = None
 
-    def start_session(self):
-        super().start_session()
+    def login(self):
+        self._session.login()
         self._get_groups()
 
+    def logout(self):
+        self._session.logout()
+
     def _get_groups(self):
-        self._groups = self.execute_get(
+        self._groups = self._session.execute_get(
             self._get_group_url(),
             "get_groups",
             200
@@ -38,8 +37,11 @@ class ApiClient(session.PanasonicSession):
 
     def get_devices(self):
         if self._devices is None:
-            self._devices = []
+            if self._groups is None:
+                self.login()
 
+            self._devices = []
+            
             for group in self._groups['groupList']:
                 if 'deviceList' in group:
                     device_list = group.get('deviceList', [])
@@ -66,7 +68,7 @@ class ApiClient(session.PanasonicSession):
     def dump(self, device_id):
         device_guid = self._device_indexer.get(device_id)
         if device_guid:
-            return self.execute_get(self._get_device_status_url(device_guid), "dump", 200)
+            return self._session.execute_get(self._get_device_status_url(device_guid), "dump", 200)
         return None
 
     def history(self, device_id, mode, date, time_zone="+01:00"):
@@ -85,7 +87,7 @@ class ApiClient(session.PanasonicSession):
                 "osTimezone": time_zone
             }
 
-            json_response = self.execute_post(
+            json_response = self._session.execute_post(
                 self._get_device_history_url(), payload, "history", 200)
 
             return {
@@ -98,7 +100,7 @@ class ApiClient(session.PanasonicSession):
         device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
-            json_response = self.execute_get(
+            json_response = self._session.execute_get(
                 self._get_device_status_url(device_guid), "get_device", 200)
             return {
                 'id': device_id,
@@ -189,7 +191,7 @@ class ApiClient(session.PanasonicSession):
                 "deviceGuid": device_guid,
                 "parameters": parameters
             }
-            _ = self.execute_post(
+            _ = self._session.execute_post(
                 self._get_device_status_control_url(), payload, "set_device", 200)
             return True
         return False
@@ -247,27 +249,27 @@ class ApiClient(session.PanasonicSession):
 
     def _get_group_url(self):
         return '{base_url}/device/group'.format(
-            base_url=session.PanasonicSession.BASE_PATH_ACC
+            base_url=constants.BASE_PATH_ACC
         )
 
     def _get_device_status_url(self, guid):
         return '{base_url}/deviceStatus/{guid}'.format(
-            base_url=session.PanasonicSession.BASE_PATH_ACC,
+            base_url=constants.BASE_PATH_ACC,
             guid=re.sub(r'(?i)\%2f', 'f', quote_plus(guid))
         )
 
     def _get_device_status_now_url(self, guid):
         return '{base_url}/deviceStatus/now/{guid}'.format(
-            base_url=session.PanasonicSession.BASE_PATH_ACC,
+            base_url=constants.BASE_PATH_ACC,
             guid=re.sub(r'(?i)\%2f', 'f', quote_plus(guid))
         )
 
     def _get_device_status_control_url(self):
         return '{base_url}/deviceStatus/control'.format(
-            base_url=session.PanasonicSession.BASE_PATH_ACC
+            base_url=constants.BASE_PATH_ACC
         )
 
     def _get_device_history_url(self):
         return '{base_url}/deviceHistoryData'.format(
-            base_url=session.PanasonicSession.BASE_PATH_ACC,
+            base_url=constants.BASE_PATH_ACC,
         )
