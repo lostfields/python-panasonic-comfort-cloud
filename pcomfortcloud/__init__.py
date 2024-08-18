@@ -14,6 +14,10 @@ from .apiclient import (
     ApiClient
 )
 
+from .session import (
+    Session
+)
+
 from .authentication import (
     Authentication
 )
