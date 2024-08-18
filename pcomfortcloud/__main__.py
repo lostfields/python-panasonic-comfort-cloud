@@ -202,18 +202,18 @@ def main():
     else:
         json_token = None
 
-    session = pcomfortcloud.Session(
+    auth = pcomfortcloud.Authentication(
         args.username,
         args.password,
         json_token,
         args.raw
     )
-    session.login()
+    auth.login()
 
-    json_token = session.get_token()
+    json_token = auth.get_token()
 
-    api = pcomfortcloud.ApiClient(
-        session,
+    session = pcomfortcloud.ApiClient(
+        auth,
         args.raw
     )
     
@@ -223,7 +223,7 @@ def main():
     try:
         if args.command == 'list':
             print("list of devices and its device id (1-x)")
-            for idx, device in enumerate(api.get_devices()):
+            for idx, device in enumerate(session.get_devices()):
                 if idx > 0:
                     print('')
 
@@ -231,20 +231,20 @@ def main():
                 print_result(device, 4)
 
         if args.command == 'get':
-            if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
-            device = api.get_devices()[int(args.device) - 1]
+            device = session.get_devices()[int(args.device) - 1]
             print("reading from device '{}' ({})".format(
                 device['name'], device['id']))
 
-            print_result(api.get_device(device['id']))
+            print_result(session.get_device(device['id']))
 
         if args.command == 'set':
-            if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
-            device = api.get_devices()[int(args.device) - 1]
+            device = session.get_devices()[int(args.device) - 1]
             print("writing to device '{}' ({})".format(device['name'], device['id']))
 
             kwargs = {}
@@ -273,23 +273,23 @@ def main():
             if args.airSwingVertical is not None:
                 kwargs['airSwingVertical'] = pcomfortcloud.constants.AirSwingUD[args.airSwingVertical]
 
-            api.set_device(device['id'], **kwargs)
+            session.set_device(device['id'], **kwargs)
 
         if args.command == 'dump':
-            if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
-            device = api.get_devices()[int(args.device) - 1]
+            device = session.get_devices()[int(args.device) - 1]
 
-            print_result(api.dump(device['id']))
+            print_result(session.dump(device['id']))
 
         if args.command == 'history':
-            if int(args.device) <= 0 or int(args.device) > len(api.get_devices()):
-                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(api.get_devices())))
+            if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):
+                raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
-            device = api.get_devices()[int(args.device) - 1]
+            device = session.get_devices()[int(args.device) - 1]
 
-            print_result(api.history(device['id'], args.mode, args.date))
+            print_result(session.history(device['id'], args.mode, args.date))
 
     except pcomfortcloud.ResponseError as ex:
         print(ex)

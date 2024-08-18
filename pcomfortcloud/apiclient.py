@@ -6,13 +6,13 @@ import hashlib
 import re
 from urllib.parse import quote_plus
 
-from . import session
+from . import authentication
 from . import constants
 
 
 class ApiClient():
-    def __init__(self, session: session.Session, raw=False):
-        self._session = session
+    def __init__(self, auth: authentication.Authentication, raw=False):
+        self._auth = auth
 
         self._groups = None
         self._devices = None
@@ -20,15 +20,12 @@ class ApiClient():
         self._raw = raw
         self._acc_client_id = None
 
-    def login(self):
-        self._session.login()
-        self._get_groups()
-
-    def logout(self):
-        self._session.logout()
-
+    def _ensure_logged_in(self):
+        self._auth.login()
+        
     def _get_groups(self):
-        self._groups = self._session.execute_get(
+        self._ensure_logged_in()
+        self._groups = self._auth.execute_get(
             self._get_group_url(),
             "get_groups",
             200
@@ -38,10 +35,10 @@ class ApiClient():
     def get_devices(self):
         if self._devices is None:
             if self._groups is None:
-                self.login()
+                self._get_groups()
 
             self._devices = []
-            
+
             for group in self._groups['groupList']:
                 if 'deviceList' in group:
                     device_list = group.get('deviceList', [])
@@ -68,10 +65,12 @@ class ApiClient():
     def dump(self, device_id):
         device_guid = self._device_indexer.get(device_id)
         if device_guid:
-            return self._session.execute_get(self._get_device_status_url(device_guid), "dump", 200)
+            return self._auth.execute_get(self._get_device_status_url(device_guid), "dump", 200)
         return None
 
     def history(self, device_id, mode, date, time_zone="+01:00"):
+        self._ensure_logged_in()
+        
         device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
@@ -87,7 +86,7 @@ class ApiClient():
                 "osTimezone": time_zone
             }
 
-            json_response = self._session.execute_post(
+            json_response = self._auth.execute_post(
                 self._get_device_history_url(), payload, "history", 200)
 
             return {
@@ -97,10 +96,12 @@ class ApiClient():
         return None
 
     def get_device(self, device_id):
+        self._ensure_logged_in()
+
         device_guid = self._device_indexer.get(device_id)
 
         if device_guid:
-            json_response = self._session.execute_get(
+            json_response = self._auth.execute_get(
                 self._get_device_status_url(device_guid), "get_device", 200)
             return {
                 'id': device_id,
@@ -191,7 +192,7 @@ class ApiClient():
                 "deviceGuid": device_guid,
                 "parameters": parameters
             }
-            _ = self._session.execute_post(
+            _ = self._auth.execute_post(
                 self._get_device_status_control_url(), payload, "set_device", 200)
             return True
         return False

@@ -35,7 +35,7 @@ def get_querystring_parameter_from_header_entry_url(response, header_entry, quer
     return params.get(querystring_parameter, [None])[0]
 
 
-class Session():
+class Authentication():
     # token:
     # - access_token
     # - refresh_token
