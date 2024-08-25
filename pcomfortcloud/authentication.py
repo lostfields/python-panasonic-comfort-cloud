@@ -311,7 +311,11 @@ class Authentication():
                 "grant_type": "refresh_token"
             },
             allow_redirects=False)
-        check_response(response, 'refresh_token', 200)
+        
+        if response.status_code != 200:
+            self._get_new_token()
+            return
+        
         token_response = json.loads(response.text)
 
         self._token = {
