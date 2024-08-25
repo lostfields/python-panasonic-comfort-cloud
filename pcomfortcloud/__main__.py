@@ -50,7 +50,7 @@ def main():
     parser.add_argument(
         '-t', '--token',
         help='File to store token in',
-        default='token.json')
+        default='~/.pcomfortcloud-oauth-token')
 
     parser.add_argument(
         '-r', '--raw',
@@ -196,30 +196,8 @@ def main():
 
     args = parser.parse_args()
 
-    if os.path.isfile(args.token):
-        with open(args.token, "r") as token_file:
-            json_token = json.load(token_file)
-    else:
-        json_token = None
-
-    auth = pcomfortcloud.Authentication(
-        args.username,
-        args.password,
-        json_token,
-        args.raw
-    )
-    auth.login()
-
-    json_token = auth.get_token()
-
-    session = pcomfortcloud.ApiClient(
-        auth,
-        args.raw
-    )
-    
-    with open(args.token, "w") as token_file:
-        json.dump(json_token, token_file, indent=4)
-
+    session = pcomfortcloud.Session(args.username, args.password, args.token, args.raw)
+    session.login()
     try:
         if args.command == 'list':
             print("list of devices and its device id (1-x)")
@@ -235,10 +213,9 @@ def main():
                 raise Exception("device not found, acceptable device id is from {} to {}".format(1, len(session.get_devices())))
 
             device = session.get_devices()[int(args.device) - 1]
-            print("reading from device '{}' ({})".format(
-                device['name'], device['id']))
+            print("reading from device '{}' ({})".format(device['name'], device['id']))
 
-            print_result(session.get_device(device['id']))
+            print_result( session.get_device(device['id']) )
 
         if args.command == 'set':
             if int(args.device) <= 0 or int(args.device) > len(session.get_devices()):

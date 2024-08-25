@@ -54,8 +54,6 @@ class Authentication():
         self._update_app_version()
 
     def _check_token_is_valid(self):
-        if self._raw:
-            print("--- Checking token is valid")
         if self._token is not None:
             now = datetime.datetime.now()
             now_unix = time.mktime(now.timetuple())
@@ -67,16 +65,21 @@ class Authentication():
                 part_of_token_b64 + '=' * (4 - len(part_of_token_b64) % 4))
             token_info_json = json.loads(part_of_token)
 
-            if self._raw:
-                print(json.dumps(token_info_json, indent=4))
-
             expiry_in_token = token_info_json["exp"]
 
             if (now_unix > expiry_in_token) or \
                     (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
+                
+                if self._raw:
+                    print("--- Token is invalid")
                 return False
+            
+            if self._raw:
+                print("--- Token is valid")
             return True
         else:
+            if self._raw:
+                print("--- Token is invalid")
             return False
 
     def _get_new_token(self):
@@ -262,13 +265,23 @@ class Authentication():
 
     def get_token(self):
         return self._token
+    
+    def set_token(self, token):
+        self._token = token
+
+    def is_token_valid(self):
+        return self._check_token_is_valid()
 
     def login(self):
         if self._token is not None:
             if not self._check_token_is_valid():
                 self._refresh_token()
+                return "Refreshing"
         else:
             self._get_new_token()
+            return "Authenticating"
+        
+        return "Valid"
 
     def logout(self):
         response = requests.post(

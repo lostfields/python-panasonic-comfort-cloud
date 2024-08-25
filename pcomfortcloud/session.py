@@ -1,21 +1,47 @@
+import os
+import json
+
 from .authentication import Authentication
 from .apiclient import ApiClient
 from . import constants
 
 class Session(Authentication):
-    def __init__(self, username, password, token, raw=False):
-        super().__init__(username, password, token, raw)
-        
-        self._app_version = constants.X_APP_VERSION
-        self._update_app_version()
+    """ Verisure app session
 
+    Args:
+        username (str): Username used to login to verisure app
+        password (str): Password used to login to verisure app
+
+    """
+
+    def __init__(self, username, password, tokenFileName='~/.panasonic-oauth-token', raw=False):
+        super().__init__(username, password, None, raw)
+        
+        self._tokenFileName = os.path.expanduser(tokenFileName)
         self._api = ApiClient(self, raw)
 
-    def get_token(self):
-        return super().get_token()
-
     def login(self):
-        super().login()
+        if super().is_token_valid() is True:
+            return
+
+        if super().get_token() is None and os.path.exists(self._tokenFileName):            
+            with open(self._tokenFileName, "r") as tokenFile:
+                self.token = json.load(tokenFile)
+
+            if self._raw: print("--- token read")
+            super().set_token(self.token)
+
+        state = super().login()
+
+        if self._raw: print("--- authentication state: " + state)
+
+        if state != "Valid":
+            self.token = super().get_token()
+            
+            with open(self._tokenFileName, "w") as tokenFile:
+                json.dump(self.token, tokenFile, indent=4)
+
+            if self._raw: print("--- token written")
 
     def logout(self):
         super().logout()
