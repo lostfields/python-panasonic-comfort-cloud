@@ -1,5 +1,6 @@
 import os
 import json
+from pathlib import Path  
 
 from .authentication import Authentication
 from .apiclient import ApiClient
@@ -14,10 +15,11 @@ class Session(Authentication):
 
     """
 
-    def __init__(self, username, password, tokenFileName='~/.panasonic-oauth-token', raw=False):
+    def __init__(self, username, password, tokenFileName='$HOME/.panasonic-oauth-token', raw=False):
         super().__init__(username, password, None, raw)
-        
-        self._tokenFileName = os.path.expanduser(tokenFileName)
+
+        home = str(Path.home())
+        self._tokenFileName = os.path.expanduser(tokenFileName.replace("$HOME", home))
         self._api = ApiClient(self, raw)
 
     def login(self):

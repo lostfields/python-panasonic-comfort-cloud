@@ -50,7 +50,7 @@ def main():
     parser.add_argument(
         '-t', '--token',
         help='File to store token in',
-        default='~/.pcomfortcloud-oauth-token')
+        default='$HOME/.pcomfortcloud-oauth-token')
 
     parser.add_argument(
         '-r', '--raw',
