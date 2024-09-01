@@ -1,5 +1,13 @@
 from enum import Enum
 
+APP_CLIENT_ID = "Xmy6xIYIitMxngjB2rHvlm6HSDNnaMJx"
+AUTH_0_CLIENT = "eyJuYW1lIjoiQXV0aDAuQW5kcm9pZCIsImVudiI6eyJhbmRyb2lkIjoiMzAifSwidmVyc2lvbiI6IjIuOS4zIn0="
+REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.panasonic.ACCsmart/callback"
+BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
+BASE_PATH_ACC = "https://accsmart.panasonic.com"
+X_APP_VERSION = "1.21.0"
+APPBRAIN_URL = "https://www.appbrain.com/app/panasonic-comfort-cloud/com.panasonic.ACCsmart"
+
 class Power(Enum):
     Off = 0
     On = 1
@@ -47,7 +55,7 @@ class FanSpeed(Enum):
     HighMid = 4
     High = 5
 
-class dataMode(Enum):
+class DataMode(Enum):
     Day = 0
     Week = 1
     Month = 2

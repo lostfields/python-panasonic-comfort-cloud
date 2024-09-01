@@ -17,7 +17,7 @@ positional arguments:
     set                 Set status of a device
     dump                Dump raw data of a device
     history             Dump history of a device
-    
+
 optional arguments:
   -h, --help            show this help message and exit
   -t TOKEN, --token TOKEN
@@ -99,16 +99,19 @@ optional arguments:
 ```python
 import pcomfortcloud
 
+
 session = pcomfortcloud.Session('user@example.com', 'mypassword')
 session.login()
 
-devices = session.get_devices()
+client = pcomfortcloud.ApiClient(session)
+
+devices = client.get_devices()
 
 print(devices)
 
-print(session.get_device(devices[0]['id']))
+print(client.get_device(devices[0]['id']))
 
-session.set_device(devices[0]['id'],
+client.set_device(devices[0]['id'],
   power = pcomfortcloud.constants.Power.On,
   temperature = 22.0)
 ```

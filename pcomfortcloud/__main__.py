@@ -1,10 +1,11 @@
 import argparse
+import os
 import json
 import pcomfortcloud
 
 from enum import Enum
 
-def print_result(obj, indent = 0):
+def print_result(obj, indent=0):
     for key in obj:
         value = obj[key]
 
@@ -12,22 +13,25 @@ def print_result(obj, indent = 0):
             print(" "*indent + key)
             print_result(value, indent + 4)
         elif isinstance(value, Enum):
-            print(" "*indent + "{0: <{width}}: {1}".format(key, value.name, width=25-indent))
+            print(
+                " "*indent + "{0: <{width}}: {1}".format(key, value.name, width=25-indent))
         elif isinstance(value, list):
             print(" "*indent + "{0: <{width}}:".format(key, width=25-indent))
             for elt in value:
                 print_result(elt, indent + 4)
                 print("")
         else:
-            print(" "*indent + "{0: <{width}}: {1}".format(key, value, width=25-indent))
+            print(" "*indent +
+                  "{0: <{width}}: {1}".format(key, value, width=25-indent))
 
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+
+def str2bool(boolean_string_value):
+    if boolean_string_value.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    if boolean_string_value.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+    raise argparse.ArgumentTypeError('Boolean value expected.')
+
 
 def main():
     """ Start pcomfortcloud Comfort Cloud command line """
@@ -46,13 +50,7 @@ def main():
     parser.add_argument(
         '-t', '--token',
         help='File to store token in',
-        default='~/.pcomfortcloud-token')
-
-    parser.add_argument(
-        '-s', '--skipVerify',
-        help='Skip Ssl verification if set as True',
-        type=str2bool, nargs='?', const=True,
-        default=False)
+        default='$HOME/.pcomfortcloud-oauth-token')
 
     parser.add_argument(
         '-r', '--raw',
@@ -198,13 +196,13 @@ def main():
 
     args = parser.parse_args()
 
-    session = pcomfortcloud.Session(args.username, args.password, args.token, args.raw, args.skipVerify == False)
+    session = pcomfortcloud.Session(args.username, args.password, args.token, args.raw)
     session.login()
     try:
         if args.command == 'list':
             print("list of devices and its device id (1-x)")
             for idx, device in enumerate(session.get_devices()):
-                if(idx > 0):
+                if idx > 0:
                     print('')
 
                 print("device #{}".format(idx + 1))
@@ -271,9 +269,8 @@ def main():
             print_result(session.history(device['id'], args.mode, args.date))
 
     except pcomfortcloud.ResponseError as ex:
-        print(ex.text)
+        print(ex)
 
 
-# pylint: disable=C0103
 if __name__ == "__main__":
     main()
