@@ -23,7 +23,7 @@ jobs:
       run: 
         echo "::set-output name=version::$( echo $GITHUB_REF_NAME | sed 's/v\?\(.*\)/\1/g' )"
     
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
@@ -49,7 +49,7 @@ jobs:
         VERSION: ${{ steps.setup.outputs.version }}
 
     - name: upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: artifact
         path: dist
