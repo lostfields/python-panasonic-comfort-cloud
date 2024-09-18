@@ -174,7 +174,6 @@ class ApiClient():
                     fan_auto = fan_auto | 2
                 else:
                     fan_auto = fan_auto & ~2
-                    print(air_y.name)
                     parameters['airSwingUD'] = air_y.value
 
             if fan_auto == 3:
