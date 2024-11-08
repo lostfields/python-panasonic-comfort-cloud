@@ -69,11 +69,11 @@ class Authentication():
 
             if (now_unix > expiry_in_token) or \
                     (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
-                
+
                 if self._raw:
                     print("--- Token is invalid")
                 return False
-            
+
             if self._raw:
                 print("--- Token is valid")
             return True
@@ -81,6 +81,32 @@ class Authentication():
             if self._raw:
                 print("--- Token is invalid")
             return False
+
+    def _get_api_key(self, timestamp, token):
+        try:
+            date = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+            timestamp_ms = str(int(date.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000))
+
+            components = [
+                'Comfort Cloud'.encode('utf-8'),
+                '521325fb2dd486bf4831b47644317fca'.encode('utf-8'),
+                timestamp_ms.encode('utf-8'),
+                'Bearer '.encode('utf-8'),
+                token.encode('utf-8')
+            ]
+
+            input_buffer = b''.join(components)
+            hash_obj = hashlib.sha256()
+            hash_obj.update(input_buffer)
+            hash_str = hash_obj.hexdigest()
+
+            result = hash_str[:9] + 'cfc' + hash_str[9:]
+            return result
+        except Exception as ex:
+            raise exceptions.ResponseError(
+                f"(CFC: Failed to generate API key: " +
+                f"{ex}"
+            )
 
     def _get_new_token(self):
         requests_session = requests.Session()
@@ -242,7 +268,7 @@ class Authentication():
                 "x-app-timestamp": timestamp,
                 "x-app-type": "1",
                 "x-app-version": self._app_version,
-                "x-cfc-api-key": generate_random_string_hex(128),
+                "x-cfc-api-key": self._get_api_key(timestamp, self._token["access_token"]),
                 "x-user-authorization-v2": "Bearer " + token_response["access_token"]
             },
             json={
@@ -265,7 +291,7 @@ class Authentication():
 
     def get_token(self):
         return self._token
-    
+
     def set_token(self, token):
         self._token = token
 
@@ -280,7 +306,7 @@ class Authentication():
         else:
             self._get_new_token()
             return "Authenticating"
-        
+
         return "Valid"
 
     def logout(self):
@@ -311,11 +337,11 @@ class Authentication():
                 "grant_type": "refresh_token"
             },
             allow_redirects=False)
-        
+
         if response.status_code != 200:
             self._get_new_token()
             return
-        
+
         token_response = json.loads(response.text)
 
         self._token = {
@@ -338,9 +364,7 @@ class Authentication():
             "x-app-timestamp": timestamp,
             "x-app-type": "1",
             "x-app-version": self._app_version,
-            # Seems to work by either setting X-CFC-API-KEY to 0 or to a 128-long hex string
-            # "X-CFC-API-KEY": "0",
-            "x-cfc-api-key": generate_random_string_hex(128),
+            "x-cfc-api-key": self._get_api_key(timestamp, self._token["access_token"]),
             "x-client-id": self._token["acc_client_id"],
             "x-user-authorization-v2": "Bearer " + self._token["access_token"]
         }
@@ -425,7 +449,8 @@ class Authentication():
                 return
             else:
                 self._app_version = constants.X_APP_VERSION
-                print("--- Error finding meta_tag")
+                if self._raw:
+                    print("--- Error finding meta_tag")
                 return
 
         except Exception:
