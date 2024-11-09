@@ -7,6 +7,7 @@ import string
 import time
 import urllib
 import requests
+import re
 
 from bs4 import BeautifulSoup
 from . import exceptions
@@ -437,12 +438,11 @@ class Authentication():
         if self._raw:
             print("--- auto detecting latest app version")
         try:
-            response = requests.get(constants.APPBRAIN_URL)
-            responseContent = response.content
-            soup = BeautifulSoup(responseContent, "html.parser")
-            meta_tag = soup.find("meta", itemprop="softwareVersion")
-            if meta_tag is not None:
-                version = meta_tag['content']
+            response = requests.get("https://play.google.com/store/apps/details?id=com.panasonic.ACCsmart")
+            responseText = response.content.decode("utf-8")
+            version_match = re.search(r'\[\"(\d+\.\d+\.\d+)\"\]', responseText)
+            if version_match:
+                version = version_match.group(1)
                 self._app_version = version
                 if self._raw:
                     print("--- found version: {}".format(self._app_version))
@@ -450,7 +450,7 @@ class Authentication():
             else:
                 self._app_version = constants.X_APP_VERSION
                 if self._raw:
-                    print("--- Error finding meta_tag")
+                    print("--- error finding version")
                 return
 
         except Exception:
