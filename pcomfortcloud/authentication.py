@@ -268,7 +268,7 @@ class Authentication():
                 "x-app-timestamp": timestamp,
                 "x-app-type": "1",
                 "x-app-version": self._app_version,
-                "x-cfc-api-key": self._get_api_key(timestamp, self._token["access_token"]),
+                "x-cfc-api-key": self._get_api_key(timestamp, token_response["access_token"]),
                 "x-user-authorization-v2": "Bearer " + token_response["access_token"]
             },
             json={
