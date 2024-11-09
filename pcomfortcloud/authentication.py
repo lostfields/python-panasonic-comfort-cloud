@@ -72,7 +72,7 @@ class Authentication():
                     (now_unix > self._token["unix_timestamp_token_received"] + self._token["expires_in_sec"]):
 
                 if self._raw:
-                    print("--- Token is invalid")
+                    print("--- Token is expired")
                 return False
 
             if self._raw:
@@ -83,11 +83,15 @@ class Authentication():
                 print("--- Token is invalid")
             return False
 
-    def _get_api_key(self, timestamp, token):
+    def _get_api_key(self, timestamp: datetime.datetime, token: string):
         try:
-            date = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
-            timestamp_ms = str(int(date.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000))
-
+            date = datetime.datetime(
+                timestamp.year, timestamp.month, timestamp.day,
+                timestamp.hour, timestamp.minute, timestamp.second,
+                0, datetime.timezone.utc
+            )
+            timestamp_ms = str(int(date.timestamp() * 1000))
+            
             components = [
                 'Comfort Cloud'.encode('utf-8'),
                 '521325fb2dd486bf4831b47644317fca'.encode('utf-8'),
@@ -259,17 +263,16 @@ class Authentication():
         # RETRIEVE ACC_CLIENT_ID
         # ------------------------------------------------------------------
         now = datetime.datetime.now()
-        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         response = requests.post(
             f'{constants.BASE_PATH_ACC}/auth/v2/login',
             headers={
                 "Content-Type": "application/json;charset=utf-8",
                 "User-Agent": "G-RAC",
                 "x-app-name": "Comfort Cloud",
-                "x-app-timestamp": timestamp,
+                "x-app-timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
                 "x-app-type": "1",
                 "x-app-version": self._app_version,
-                "x-cfc-api-key": self._get_api_key(timestamp, token_response["access_token"]),
+                "x-cfc-api-key": self._get_api_key(now, token_response["access_token"]),
                 "x-user-authorization-v2": "Bearer " + token_response["access_token"]
             },
             json={
@@ -357,15 +360,14 @@ class Authentication():
 
     def _get_header_for_api_calls(self, no_client_id=False):
         now = datetime.datetime.now()
-        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         return {
             "Content-Type": "application/json;charset=utf-8",
             "x-app-name": "Comfort Cloud",
             "user-agent": "G-RAC",
-            "x-app-timestamp": timestamp,
+            "x-app-timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
             "x-app-type": "1",
             "x-app-version": self._app_version,
-            "x-cfc-api-key": self._get_api_key(timestamp, self._token["access_token"]),
+            "x-cfc-api-key": self._get_api_key(now, self._token["access_token"]),
             "x-client-id": self._token["acc_client_id"],
             "x-user-authorization-v2": "Bearer " + self._token["access_token"]
         }
