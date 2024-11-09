@@ -6,7 +6,6 @@ REDIRECT_URI = "panasonic-iot-cfc://authglb.digital.panasonic.com/android/com.pa
 BASE_PATH_AUTH = "https://authglb.digital.panasonic.com"
 BASE_PATH_ACC = "https://accsmart.panasonic.com"
 X_APP_VERSION = "1.22.0"
-APPBRAIN_URL = "https://www.appbrain.com/app/panasonic-comfort-cloud/com.panasonic.ACCsmart"
 
 class Power(Enum):
     Off = 0
