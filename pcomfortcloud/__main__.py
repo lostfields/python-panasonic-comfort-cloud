@@ -54,8 +54,8 @@ def main():
 
     parser.add_argument(
         '-r', '--raw',
-        help='Raw dump of response',
-        type=str2bool, nargs='?', const=True,
+        help='Raw dump of response (requires True/False if flag is used)',
+        type=str2bool,
         default=False)
 
     commandparser = parser.add_subparsers(
@@ -68,22 +68,21 @@ def main():
 
     get_parser = commandparser.add_parser(
         'get',
-        help="Get status of a device")
+        help="Get device parameters")
 
     get_parser.add_argument(
         dest='device',
         type=int,
-        help='Device number #')
+        help='Device number (e.g., 1, 2, ...)')
 
     set_parser = commandparser.add_parser(
         'set',
-        help="Set status of a device")
+        help="Set device parameter(s)")
 
     set_parser.add_argument(
         dest='device',
         type=int,
-        help='Device number #'
-    )
+        help='Device number (e.g., 1, 2, ...)')
 
     set_parser.add_argument(
         '-p', '--power',
@@ -95,7 +94,7 @@ def main():
     set_parser.add_argument(
         '-t', '--temperature',
         type=float,
-        help="Temperature")
+        help="Temperature in decimal format")
 
     set_parser.add_argument(
         '-f', '--fanSpeed',
@@ -168,12 +167,12 @@ def main():
 
     dump_parser = commandparser.add_parser(
         'dump',
-        help="Dump data of a device")
+        help="Dump all data of a device")
 
     dump_parser.add_argument(
         dest='device',
         type=int,
-        help='Device number 1-x')
+        help='Device number (e.g., 1, 2, ...)')
 
     history_parser = commandparser.add_parser(
         'history',
@@ -182,17 +181,17 @@ def main():
     history_parser.add_argument(
         dest='device',
         type=int,
-        help='Device number 1-x')
+        help='Device number (e.g., 1, 2, ...)')
 
     history_parser.add_argument(
         dest='mode',
         type=str,
-        help='mode (Day, Week, Month, Year)')
+        help='Mode (Day, Week, Month, Year)')
 
     history_parser.add_argument(
         dest='date',
         type=str,
-        help='date of day like 20190807')
+        help='Date, for example: 20190807')
 
     args = parser.parse_args()
 

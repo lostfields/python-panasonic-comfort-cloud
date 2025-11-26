@@ -1,100 +1,119 @@
 # python-panasonic-comfort-cloud
-A python module for reading and changing status of panasonic climate devices through Panasonic Comfort Cloud app api
+A **Python module** for reading and changing the status of **Panasonic climate devices** through Panasonic Comfort Cloud app API
+
 
 ## Command line usage
 
 ```
-usage: pcomfortcloud.py [-h] [-t TOKEN] username password {list,get,set} ...
+usage: pcomfortcloud [-h] [-t TOKEN] [-r BOOL] username password {list,get,set,dump,history} ...
 
-Read or change status of Panasonic Climate devices
+Read or change status of Panasonic climate devices
 
 positional arguments:
   username              Username for Panasonic Comfort Cloud
   password              Password for Panasonic Comfort Cloud
-  {list,get,set,dump}   commands
+  {list,get,set,dump,history}
+                        commands
     list                Get a list of all devices
-    get                 Get status of a device
-    set                 Set status of a device
-    dump                Dump raw data of a device
+    get                 Get device parameters
+    set                 Set device parameter(s)
+    dump                Dump all data of a device
     history             Dump history of a device
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  -t TOKEN, --token TOKEN
-                        File to store token in
-  -s [BOOL], --skipVerify [BOOL]
-                        Skip Ssl verification
-  -r [BOOL], --raw [BOOL]
-                        Raw dump of response
+  -t, --token TOKEN     File to store token in
+  -r, --raw BOOL        Raw dump of response
 ```
 
+Get a list of all devices:
+```
+usage: pcomfortcloud.py username password list [-h]
+
+options:
+  -h, --help  show this help message and exit
+```
+
+Get device parameters:
 ```
 usage: pcomfortcloud.py username password get [-h] device
 
 positional arguments:
-  device      device number
+  device      Device number (e.g., 1, 2, ...)
 
-optional arguments:
+options:
   -h, --help  show this help message and exit
 ```
 
+Set device parameter(s):
 ```
 usage: pcomfortcloud.py username password set [-h]
-                                             [-p, --power {On,Off}]
-                                             [-t, --temperature TEMPERATURE]
-                                             [-f, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}]
-                                             [-m, --mode {Auto,Cool,Dry,Heat,Fan}]
-                                             [-e, --eco {Auto,Quiet,Powerful}]
-                                             [-y, --airswingvertical {Auto,Down,DownMid,Mid,UpMid,Up}]
-                                             [-x, --airswinghorizontal {Auto,Left,LeftMid,Mid,RightMid,Right}]
-                                             device
+                                              [-p, --power {On,Off}]
+                                              [-t, --temperature TEMPERATURE]
+                                              [-f, --fanSpeed {Auto,Low,LowMid,Mid,HighMid,High}]
+                                              [-m, --mode {Auto,Cool,Dry,Heat,Fan}]
+                                              [-e, --eco {Auto,Quiet,Powerful}]
+                                              [-n, --nanoe {On,Off,ModeG,All}]
+                                              [-y, --airSwingVertical {Auto,Down,DownMid,Mid,UpMid,Up}]
+                                              [-x, --airSwingHorizontal {Auto,Left,LeftMid,Mid,RightMid,Right}]
+                                              device
 
 positional arguments:
-  device                Device number
+  device                Device number (e.g., 1, 2, ...)
 
-optional arguments:
-  -h, --help
-                        show this help message and exit
-  -p, --power {On,Off}
-                        Power mode
+options:
+  -h, --help            show this help message and exit
+  -p, --power {On,Off}  Power mode
   -t, --temperature TEMPERATURE
                         Temperature in decimal format
-  -f, --fanspeed {Auto,Low,LowMid,Mid,HighMid,High}
+  -f, --fanSpeed {Auto,Low,LowMid,Mid,HighMid,High}
                         Fan speed
   -m, --mode {Auto,Cool,Dry,Heat,Fan}
                         Operation mode
   -e, --eco {Auto,Quiet,Powerful}
                         Eco mode
-  -y, --airswingvertical {Auto,Down,DownMid,Mid,UpMid,Up}
+  -n, --nanoe {On,Off,ModeG,All}
+                        Nanoe mode
+  -y, --airSwingVertical {Auto,Down,DownMid,Mid,UpMid,Up}
                         Vertical position of the air swing
-  -x, --airswinghorizontal {Auto,Left,LeftMid,Mid,RightMid,Right}
+  -x, --airSwingHorizontal {Auto,Left,LeftMid,Mid,RightMid,Right}
                         Horizontal position of the air swing
 ```
 
+Dump all data of a device:
 ```
 usage: pcomfortcloud username password dump [-h] device
 
 positional arguments:
-  device      Device number 1-x
+  device      Device number (e.g., 1, 2, ...)
 
 optional arguments:
   -h, --help  show this help message and exit
 ```
 
+Dump history of a device:
 ```
 usage: pcomfortcloud username password history [-h] device mode date
 
 positional arguments:
-  device      Device number 1-x
-  mode        mode (Day, Week, Month, Year)
-  date        date of day like 20190807
+  device      Device number (e.g., 1, 2, ...)
+  mode        Mode (Day, Week, Month, Year)
+  date        Date, for example: 20190807
 
 optional arguments:
   -h, --help  show this help message and exit
 ```
 
-## Module usage
+### Command line security warning
 
+Be aware that passing your **username and password** directly as positional arguments can be insecure, as these credentials may be saved in your shell's history file (e.g., `.bash_history`).
+
+For better security, especially in shared or logged environments, it is recommended to:
+1.  Use the **token file** option (`-t TOKEN`) after the first successful login.
+2.  Use environment variables for sensitive credentials where possible.
+
+
+## Module usage
 
 ```python
 import pcomfortcloud
@@ -116,9 +135,20 @@ client.set_device(devices[0]['id'],
   temperature = 22.0)
 ```
 
-## PyPi package
-can be found at https://pypi.org/project/pcomfortcloud/
 
-### How to publish package;
+## PyPi package
+
+The package can be found on PyPI: [https://pypi.org/project/pcomfortcloud/](https://pypi.org/project/pcomfortcloud/)
+
+### Installation
+
+Install the module using **pip**:
+
+```bash
+pip install pcomfortcloud
+```
+
+## Developer info
+
 - `python .\setup.py sdist bdist_wheel`
 - `python -m twine upload dist/*`
